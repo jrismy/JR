@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人工智能编年史 · 1950—2026</title>
+<meta name="description" content="从图灵之问到生成式浪潮：一部关于人工智能的编年史，八章，两次寒冬，与仍在续写的现在。">
+<style>
+  /* ———— 设计令牌 ———— */
+  :root {
+    --paper: #F3F3EE;          /* 宣纸灰白（偏冷） */
+    --paper-deep: #EAEAE3;     /* 纸的暗部 */
+    --ink: #1D232C;            /* 青墨 */
+    --ink-soft: #55606E;       /* 淡墨 */
+    --cinnabar: #BC3A28;       /* 朱砂 */
+    --indigo: #39536E;         /* 靛青 */
+    --winter: #5B7285;         /* 寒冬钢灰 */
+    --line: #D5D5CA;           /* 界栏线 */
+    --seal-text: #F6EFE9;      /* 印文色 */
+
+    --font-serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", "Source Han Serif SC", serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+
+    --rail-w: 264px;
+    --measure: 62ch;
+
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #13161B;
+      --paper-deep: #1A1E25;
+      --ink: #E6E3DA;
+      --ink-soft: #98A0AC;
+      --cinnabar: #E05B41;
+      --indigo: #8FA9C4;
+      --winter: #7B93A6;
+      --line: #2B313A;
+      --seal-text: #F6EFE9;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #13161B;
+    --paper-deep: #1A1E25;
+    --ink: #E6E3DA;
+    --ink-soft: #98A0AC;
+    --cinnabar: #E05B41;
+    --indigo: #8FA9C4;
+    --winter: #7B93A6;
+    --line: #2B313A;
+    --seal-text: #F6EFE9;
+  }
+  :root[data-theme="light"] {
+    --paper: #F3F3EE;
+    --paper-deep: #EAEAE3;
+    --ink: #1D232C;
+    --ink-soft: #55606E;
+    --cinnabar: #BC3A28;
+    --indigo: #39536E;
+    --winter: #5B7285;
+    --line: #D5D5CA;
+    --seal-text: #F6EFE9;
+  }
+
+  /* ———— 基础 ———— */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 17px;
+    line-height: 1.9;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--cinnabar);
+    outline-offset: 3px;
+  }
+  ::selection { background: var(--cinnabar); color: var(--seal-text); }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+
+  /* ———— 左侧书脊栏 ———— */
+  .rail {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--rail-w);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    padding: 2.2rem 1.6rem;
+    background: var(--paper);
+    z-index: 10;
+  }
+  .rail__mark {
+    font-size: 0.95rem;
+    letter-spacing: 0.5em;
+    color: var(--ink);
+  }
+  .rail__mark small {
+    display: block;
+    margin-top: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    color: var(--ink-soft);
+  }
+  .rail__nav {
+    margin-top: 2.4rem;
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .rail__nav::-webkit-scrollbar { display: none; }
+  .rail__nav ol { list-style: none; }
+  .rail__nav a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    padding: 0.38rem 0;
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    border-left: 2px solid transparent;
+    padding-left: 0.8rem;
+    margin-left: -0.8rem;
+    transition: color 0.25s ease, border-color 0.25s ease;
+  }
+  .rail__nav a .y {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--ink-soft);
+    opacity: 0.75;
+    min-width: 4.2em;
+    font-variant-numeric: tabular-nums;
+  }
+  .rail__nav a:hover { color: var(--ink); }
+  .rail__nav a.is-active {
+    color: var(--cinnabar);
+    border-left-color: var(--cinnabar);
+  }
+  .rail__year {
+    border-top: 1px solid var(--line);
+    padding-top: 1.1rem;
+    margin-top: 1.1rem;
+  }
+  .rail__year .label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.28em;
+    color: var(--ink-soft);
+  }
+  .rail__year .value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 2.6rem;
+    line-height: 1.15;
+    color: var(--cinnabar);
+  }
+  .theme-toggle {
+    margin-top: 1rem;
+    align-self: flex-start;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.2em;
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--line);
+    padding: 0.42rem 0.8rem;
+    cursor: pointer;
+    transition: color 0.25s ease, border-color 0.25s ease;
+  }
+  .theme-toggle:hover { color: var(--cinnabar); border-color: var(--cinnabar); }
+
+  /* ———— 移动端浮动年份 ———— */
+  .float-year {
+    display: none;
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 10;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 0.3rem 0.75rem;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.05rem;
+    color: var(--cinnabar);
+    box-shadow: 0 2px 14px rgba(0,0,0,0.08);
+  }
+
+  /* ———— 主栏 ———— */
+  .page { margin-left: var(--rail-w); }
+  .sheet {
+    max-width: 880px;
+    padding: 0 clamp(1.4rem, 5vw, 4.5rem);
+    margin: 0 auto;
+  }
+
+  /* ———— 首屏 ———— */
+  .hero { padding: clamp(4rem, 10vh, 7.5rem) 0 4.5rem; }
+  .hero__epigraph {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.3em;
+    color: var(--ink-soft);
+    margin-bottom: 2.6rem;
+  }
+  .hero__title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+  h1 {
+    font-size: clamp(2.6rem, 7vw, 4.6rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1.28;
+    text-wrap: balance;
+  }
+  h1 .thin { font-weight: 400; color: var(--ink-soft); }
+  .seal {
+    flex: none;
+    width: clamp(3.2rem, 6vw, 4rem);
+    background: var(--cinnabar);
+    color: var(--seal-text);
+    display: grid;
+    place-items: center;
+    padding: 1.3em 0;
+    margin-top: 0.6rem;
+  }
+  .seal span {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    line-height: 1.75;
+    width: 1em;
+    word-break: break-all;
+    text-align: center;
+  }
+  .hero__sub {
+    margin-top: 1.8rem;
+    max-width: var(--measure);
+    color: var(--ink-soft);
+    font-size: 1.02rem;
+  }
+  .hero__sub b { color: var(--ink); font-weight: 600; }
+
+  /* 年代标尺 */
+  .ruler { margin-top: 3.6rem; }
+  .ruler__track {
+    display: flex;
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--line);
+  }
+  .ruler__seg {
+    flex: 1;
+    padding: 0.55rem 0 0.7rem;
+    border-left: 1px solid var(--line);
+    position: relative;
+    cursor: pointer;
+    background: none;
+    border-top: none; border-right: none; border-bottom: none;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    text-align: left;
+    padding-left: 0.45rem;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .ruler__seg::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--seg, transparent);
+  }
+  .ruler__seg:hover { background: var(--paper-deep); color: var(--ink); }
+  .ruler__caption {
+    margin-top: 0.55rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    color: var(--ink-soft);
+  }
+  .ruler__caption i {
+    font-style: normal;
+    color: var(--cinnabar);
+  }
+
+  /* ———— 序 / 跋 ———— */
+  .prose {
+    max-width: var(--measure);
+    color: var(--ink);
+  }
+  .prose p + p { margin-top: 1.1em; }
+  .preface { padding: 0 0 4rem; border-bottom: 1px solid var(--line); }
+  .preface__head, .postface__head {
+    font-size: 1.35rem;
+    letter-spacing: 0.55em;
+    margin-bottom: 1.6rem;
+  }
+  .postface {
+    padding: 4.5rem 0 6rem;
+    border-top: 1px solid var(--line);
+  }
+  .postface .sign {
+    margin-top: 2.2rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    color: var(--ink-soft);
+  }
+
+  /* ———— 章 ———— */
+  .chapter { padding: 5rem 0 2.5rem; --accent: var(--cinnabar); }
+  .chapter--winter { --accent: var(--winter); }
+  .chapter__head {
+    display: flex;
+    align-items: stretch;
+    gap: clamp(1.2rem, 3vw, 2.2rem);
+    margin-bottom: 2rem;
+  }
+  .chapter__num {
+    font-size: clamp(2.6rem, 5vw, 3.6rem);
+    line-height: 1;
+    color: var(--accent);
+    font-weight: 700;
+    padding-top: 0.25rem;
+  }
+  .chapter__title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 700;
+    line-height: 1.42;
+    width: 1em;
+    word-break: break-all;
+  }
+  .chapter__meta {
+    align-self: flex-end;
+    padding-bottom: 0.4rem;
+  }
+  .chapter__years {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+  .chapter__tag {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.24em;
+    color: var(--ink-soft);
+  }
+  .chapter__intro {
+    max-width: var(--measure);
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    margin-bottom: 3rem;
+    border-left: 2px solid var(--accent);
+    padding-left: 1.2rem;
+  }
+  .chapter__intro b { color: var(--ink); font-weight: 600; }
+
+  /* ———— 编年脊线与条目 ———— */
+  .entries {
+    list-style: none;
+    border-left: 1px solid var(--line);
+    margin-left: 0.35rem;
+  }
+  .entry {
+    position: relative;
+    padding: 0 0 2.6rem 2rem;
+  }
+  .entry::before {
+    content: "";
+    position: absolute;
+    left: -0.3rem;
+    top: 0.62em;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 1.5px solid var(--accent);
+  }
+  .entry--milestone::before { background: var(--accent); }
+  .entry__year {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.82rem;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+  }
+  .entry__title {
+    font-size: 1.22rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin: 0.25rem 0 0.5rem;
+    text-wrap: balance;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .stamp {
+    font-size: 0.62rem;
+    font-weight: 400;
+    letter-spacing: 0.24em;
+    color: var(--cinnabar);
+    border: 1px solid var(--cinnabar);
+    padding: 0.1rem 0.35rem 0.1rem 0.55rem;
+    white-space: nowrap;
+  }
+  .entry__body {
+    max-width: var(--measure);
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+  }
+  .entry__body b { color: var(--ink); font-weight: 600; }
+
+  /* 滚动显现 */
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.is-in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; }
+  }
+
+  /* ———— 响应式 ———— */
+  @media (max-width: 900px) {
+    .rail {
+      position: static;
+      width: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      padding: 1.4rem 1.4rem 1.2rem;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .rail__nav, .rail__year { display: none; }
+    .theme-toggle { margin-top: 0; }
+    .float-year { display: block; }
+    .page { margin-left: 0; }
+    .chapter__title {
+      width: auto;
+      word-break: normal;
+      letter-spacing: 0.2em;
+      align-self: center;
+    }
+    .chapter__head { align-items: center; }
+    .chapter__meta { align-self: center; padding-bottom: 0; }
+    .ruler__seg:nth-child(even) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="rail">
+  <a class="rail__mark" href="#top">人工智能编年史
+    <small>CHRONICLE OF AI · 1950—2026</small>
+  </a>
+  <nav class="rail__nav" aria-label="章节目录">
+    <ol>
+      <li><a href="#dawn"><span class="y">1943–55</span>先声</a></li>
+      <li><a href="#birth"><span class="y">1956–73</span>第一章 · 诞生</a></li>
+      <li><a href="#winter1"><span class="y">1974–80</span>第二章 · 第一次寒冬</a></li>
+      <li><a href="#revival"><span class="y">1980–87</span>第三章 · 专家系统</a></li>
+      <li><a href="#winter2"><span class="y">1987–93</span>第四章 · 第二次寒冬</a></li>
+      <li><a href="#quiet"><span class="y">1993–11</span>第五章 · 静水流深</a></li>
+      <li><a href="#deep"><span class="y">2012–16</span>第六章 · 深度学习</a></li>
+      <li><a href="#attention"><span class="y">2017–21</span>第七章 · 注意力时代</a></li>
+      <li><a href="#wave"><span class="y">2022–26</span>第八章 · 生成式浪潮</a></li>
+      <li><a href="#postface"><span class="y">——</span>跋</a></li>
+    </ol>
+  </nav>
+  <div class="rail__year" aria-hidden="true">
+    <div class="label">当前纪年 / NOW READING</div>
+    <div class="value" id="railYear">1950</div>
+  </div>
+  <button class="theme-toggle" id="themeToggle" aria-label="切换深浅主题">昼 / 夜</button>
+</header>
+
+<div class="float-year" id="floatYear" aria-hidden="true">1950</div>
+
+<main class="page" id="top">
+  <div class="sheet">
+
+    <!-- 首屏 -->
+    <section class="hero">
+      <p class="hero__epigraph">"机器能思考吗？" —— 艾伦 · 图灵，一九五〇年</p>
+      <div class="hero__title-row">
+        <h1>人工智能<br>编年史<span class="thin">，一部尚未完稿的历史</span></h1>
+        <div class="seal" aria-hidden="true"><span>机器之思</span></div>
+      </div>
+      <p class="hero__sub">
+        七十余年间，这门学科两度被宣判死亡，又两度归来。本编年史以<b>八章、两次寒冬、四十余个年份</b>为经纬，
+        记述人工智能从一个哲学之问，如何一步步变成写进日常的技术——并解释每一步<b>为什么重要</b>。
+      </p>
+
+      <div class="ruler" role="navigation" aria-label="年代标尺">
+        <div class="ruler__track">
+          <button class="ruler__seg" style="--seg: var(--cinnabar)" data-target="dawn">1950</button>
+          <button class="ruler__seg" style="--seg: var(--cinnabar)" data-target="birth">1960</button>
+          <button class="ruler__seg" style="--seg: var(--winter)" data-target="winter1">1970</button>
+          <button class="ruler__seg" style="--seg: var(--cinnabar)" data-target="revival">1980</button>
+          <button class="ruler__seg" style="--seg: var(--winter)" data-target="winter2">1990</button>
+          <button class="ruler__seg" style="--seg: var(--cinnabar)" data-target="quiet">2000</button>
+          <button class="ruler__seg" style="--seg: var(--cinnabar)" data-target="deep">2010</button>
+          <button class="ruler__seg" style="--seg: var(--cinnabar)" data-target="wave">2020</button>
+        </div>
+        <p class="ruler__caption">点击年代跳转对应章节 · <i>灰段为两次 AI 寒冬</i></p>
+      </div>
+    </section>
+
+    <!-- 序 -->
+    <section class="preface reveal">
+      <h2 class="preface__head">序</h2>
+      <div class="prose">
+        <p>
+          写一部人工智能的编年史，难处不在材料太少，而在叙事太顺。回头看，从感知机到大语言模型仿佛一条直线；
+          身处其中的人却经历过截然相反的判断：它被誉为二十年内可成的伟业，也被斥为骗取经费的幻术。
+        </p>
+        <p>
+          因此本史保留了两次「寒冬」的完整章节。寒冬不是插曲，而是这门学科的性格来源——今日所有关于
+          「炒作与泡沫」的争论，都能在一九七三年与一九八七年找到底稿。读史的用处，正在于此。
+        </p>
+      </div>
+    </section>
+
+    <!-- 先声 -->
+    <section class="chapter" id="dawn">
+      <header class="chapter__head reveal">
+        <div class="chapter__num" aria-hidden="true">序</div>
+        <h2 class="chapter__title">先声</h2>
+        <div class="chapter__meta">
+          <span class="chapter__years">1943 — 1955</span>
+          <span class="chapter__tag">在「人工智能」有名字之前</span>
+        </div>
+      </header>
+      <p class="chapter__intro reveal">
+        计算机本身尚在襁褓，一小群数学家已经在问：<b>神经元的放电，能否被写成逻辑？</b>
+        这一时期没有「人工智能」这个词，却已备齐了它日后的全部母题——神经网络、学习、以及如何判定机器在思考。
+      </p>
+      <ol class="entries">
+        <li class="entry reveal">
+          <span class="entry__year">1943</span>
+          <h3 class="entry__title">麦卡洛克与皮茨：第一个人工神经元</h3>
+          <p class="entry__body">
+            神经生理学家麦卡洛克与逻辑学家皮茨证明：简化的神经元网络可以计算任何逻辑函数。
+            <b>大脑第一次被当作一台可分析的机器</b>——八十年后所有神经网络的源头，是一篇生物学论文。
+          </p>
+        </li>
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">1950</span>
+          <h3 class="entry__title">图灵之问 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            图灵发表《计算机器与智能》，把「机器能思考吗」改写为可操作的「模仿游戏」：若隔屏对话无法分辨人与机器，便不必再争论「思考」的定义。
+            <b>这一步把哲学问题变成了工程问题</b>，人工智能自此有了判据。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">1951</span>
+          <h3 class="entry__title">SNARC：第一台神经网络机器</h3>
+          <p class="entry__body">
+            明斯基用三千个真空管搭出模拟四十个神经元的学习机器，让「学习可以被造出来」从论文走进了实验室。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">1952</span>
+          <h3 class="entry__title">塞缪尔的跳棋程序</h3>
+          <p class="entry__body">
+            IBM 工程师塞缪尔写出能在对弈中自我改进的跳棋程序，并率先使用了「机器学习」一词。
+            程序最终胜过了作者本人——<b>「机器只会执行命令」的常识第一次出现裂缝</b>。
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 第一章 诞生 -->
+    <section class="chapter" id="birth">
+      <header class="chapter__head reveal">
+        <div class="chapter__num" aria-hidden="true">壹</div>
+        <h2 class="chapter__title">诞生</h2>
+        <div class="chapter__meta">
+          <span class="chapter__years">1956 — 1973</span>
+          <span class="chapter__tag">命名、狂热与第一批程序</span>
+        </div>
+      </header>
+      <p class="chapter__intro reveal">
+        一场暑期研讨会给这门学科起了名字，此后十七年是它的第一段黄金岁月：定理证明、对话程序、机器人相继问世，
+        乐观情绪也随之膨胀——<b>「二十年内机器将胜任人的一切工作」</b>是当时严肃学者的公开预测。
+      </p>
+      <ol class="entries">
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">1956</span>
+          <h3 class="entry__title">达特茅斯会议 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            麦卡锡、明斯基、香农等人在达特茅斯学院聚会一个夏天，提案中首次写下
+            <b>「Artificial Intelligence」</b>。一个词划定了一个学科：此后的一切荣辱，都记在这个名字之下。
+          </p>
+        </li>
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">1957</span>
+          <h3 class="entry__title">罗森布拉特的感知机 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            感知机是第一个可训练的神经网络模型：给它看例子，它自己调整权重。《纽约时报》报道称它是
+            「能行走、说话、观看、书写并自我复制的电子计算机的雏形」——<b>宣传与现实的距离，从此成为本学科的固定配角</b>。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">1958</span>
+          <h3 class="entry__title">麦卡锡发明 LISP</h3>
+          <p class="entry__body">
+            为符号推理而生的 LISP 语言问世，此后三十年几乎所有 AI 程序都用它写成。语言塑造思维——LISP 塑造了整整一代「符号主义」AI。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">1966</span>
+          <h3 class="entry__title">ELIZA：第一个聊天程序</h3>
+          <p class="entry__body">
+            魏泽鲍姆用几条模式匹配规则模仿心理治疗师，却发现用户对它倾诉衷肠、坚信它「理解」自己。
+            他为此惊惧终生。<b>人类愿意向机器投射理解力</b>——这一发现比程序本身重要得多。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">1969</span>
+          <h3 class="entry__title">《感知机》一书与联结主义的搁浅</h3>
+          <p class="entry__body">
+            明斯基与帕珀特从数学上证明单层感知机连「异或」都学不会。结论本不适用于多层网络，
+            但资助机构不作此细读——<b>神经网络研究自此沉寂十余年</b>，符号主义独大。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">1972</span>
+          <h3 class="entry__title">Shakey 机器人与 Prolog</h3>
+          <p class="entry__body">
+            斯坦福研究所的 Shakey 是第一台能感知环境、规划行动的移动机器人；同年逻辑编程语言 Prolog 在欧洲诞生。
+            推理、规划、感知——经典 AI 的三大件在这一年集齐。
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 第二章 第一次寒冬 -->
+    <section class="chapter chapter--winter" id="winter1">
+      <header class="chapter__head reveal">
+        <div class="chapter__num" aria-hidden="true">贰</div>
+        <h2 class="chapter__title">第一次寒冬</h2>
+        <div class="chapter__meta">
+          <span class="chapter__years">1974 — 1980</span>
+          <span class="chapter__tag">承诺到期之日</span>
+        </div>
+      </header>
+      <p class="chapter__intro reveal">
+        「二十年内」的支票陆续到期，无一兑现。机器翻译闹出笑话，玩具问题之外的现实任务寸步难行——
+        计算力不足、数据匮乏、组合爆炸，三座大山一座未移。<b>经费退潮，只留下信念尚存的少数人。</b>
+      </p>
+      <ol class="entries">
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">1973</span>
+          <h3 class="entry__title">莱特希尔报告 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            英国政府委托数学家莱特希尔评估 AI 研究，报告结论严酷：领域承诺「几乎全部落空」。
+            英国随即大幅撤资，美国 DARPA 跟进收缩。<b>这是「AI 寒冬」一词所指的第一个冬天</b>。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">1974—80</span>
+          <h3 class="entry__title">漫长的低温期</h3>
+          <p class="entry__body">
+            「人工智能」成了申请经费时要回避的词。但冬天并非空白：贝叶斯方法、知识表示等基础工作恰在此间萌芽——
+            <b>寒冬冻结的是预算，不是问题本身</b>。
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 第三章 专家系统 -->
+    <section class="chapter" id="revival">
+      <header class="chapter__head reveal">
+        <div class="chapter__num" aria-hidden="true">叁</div>
+        <h2 class="chapter__title">专家系统</h2>
+        <div class="chapter__meta">
+          <span class="chapter__years">1980 — 1987</span>
+          <span class="chapter__tag">知识就是力量，也是瓶颈</span>
+        </div>
+      </header>
+      <p class="chapter__intro reveal">
+        新共识出现：与其追求通用智能，不如把<b>某一行专家的知识写成规则</b>。专家系统第一次让 AI 赚到了钱，
+        国家级竞赛随之开场；而在聚光灯外，被判过死刑的神经网络正悄悄复活。
+      </p>
+      <ol class="entries">
+        <li class="entry reveal">
+          <span class="entry__year">1980</span>
+          <h3 class="entry__title">XCON 投入商用</h3>
+          <p class="entry__body">
+            DEC 公司用专家系统 XCON 为客户自动配置计算机订单，每年节省数千万美元。
+            <b>AI 第一次有了利润表上的位置</b>，企业争相跟进，产业初成。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">1982</span>
+          <h3 class="entry__title">第五代计算机计划 · Hopfield 网络</h3>
+          <p class="entry__body">
+            日本启动雄心勃勃的「第五代计算机」国家计划，美欧应声加码——AI 首次成为大国竞赛的名目。
+            同年物理学家 Hopfield 以能量视角重构神经网络，为联结主义的回归凿开了第一道缝。
+          </p>
+        </li>
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">1986</span>
+          <h3 class="entry__title">反向传播的普及 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            鲁梅尔哈特、辛顿与威廉姆斯的论文让「反向传播」算法广为人知：<b>多层神经网络终于可以有效训练</b>，
+            《感知机》一书的判决被推翻。今日每一个深度模型的每一次训练，跑的仍是这套算法。
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 第四章 第二次寒冬 -->
+    <section class="chapter chapter--winter" id="winter2">
+      <header class="chapter__head reveal">
+        <div class="chapter__num" aria-hidden="true">肆</div>
+        <h2 class="chapter__title">第二次寒冬</h2>
+        <div class="chapter__meta">
+          <span class="chapter__years">1987 — 1993</span>
+          <span class="chapter__tag">规则写不尽世界</span>
+        </div>
+      </header>
+      <p class="chapter__intro reveal">
+        专家系统的软肋逐一显形：规则维护成本高昂，遇到边界情形即刻失灵，常识无法穷举。
+        专用 Lisp 机市场一夜崩塌，第五代计划无果而终。<b>历史第二次给出同一教训：手写规则通不往智能。</b>
+      </p>
+      <ol class="entries">
+        <li class="entry reveal">
+          <span class="entry__year">1987</span>
+          <h3 class="entry__title">Lisp 机市场崩溃</h3>
+          <p class="entry__body">
+            通用工作站性能反超昂贵的 AI 专用硬件，专营厂商接连倒闭。资本再度撤离，
+            「专家系统」步「人工智能」后尘，成为融资场合的忌语。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">1988—93</span>
+          <h3 class="entry__title">转向统计</h3>
+          <p class="entry__body">
+            低谷中，语音识别与机器翻译率先改用概率与统计方法，成绩悄然超越规则系统。
+            <b>「从数据中学习」取代「向专家提问」</b>——下一个时代的方法论在冬天里完成了换血。
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 第五章 静水流深 -->
+    <section class="chapter" id="quiet">
+      <header class="chapter__head reveal">
+        <div class="chapter__num" aria-hidden="true">伍</div>
+        <h2 class="chapter__title">静水流深</h2>
+        <div class="chapter__meta">
+          <span class="chapter__years">1993 — 2011</span>
+          <span class="chapter__tag">机器学习的长跑</span>
+        </div>
+      </header>
+      <p class="chapter__intro reveal">
+        不再谈论宏大的「智能」，转而解决一个个可度量的问题——下棋、认字、过滤垃圾邮件。
+        与此同时，三股暗流在积蓄：<b>互联网带来数据，游戏产业带来 GPU，长跑者带来算法</b>。它们将在 2012 年汇合。
+      </p>
+      <ol class="entries">
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">1997</span>
+          <h3 class="entry__title">深蓝战胜卡斯帕罗夫 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            IBM 深蓝以 3.5 : 2.5 击败国际象棋世界冠军。靠的是每秒两亿步的暴力搜索而非「理解」，
+            但<b>「机器不可能在智力游戏上胜过顶尖人类」的心理防线就此失守</b>。同年，LSTM 网络发表——它将统治序列建模二十年。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">1998</span>
+          <h3 class="entry__title">LeNet-5：卷积网络读支票</h3>
+          <p class="entry__body">
+            杨立昆的卷积神经网络投入美国银行系统识别手写支票。深度学习的第一份正式工作，规模虽小，路线已明。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2006</span>
+          <h3 class="entry__title">「深度学习」重新命名</h3>
+          <p class="entry__body">
+            辛顿等人提出深度信念网络的逐层训练法，并以「深度学习」为多层神经网络正名。
+            换一个名字，避开「神经网络」三十年的污名——<b>这既是算法创新，也是一次成功的学科公关</b>。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2009</span>
+          <h3 class="entry__title">ImageNet 建成</h3>
+          <p class="entry__body">
+            李飞飞团队发布一千四百万张标注图片的数据集，并设立年度识别竞赛。
+            <b>它赌的是「算法不缺，缺数据」</b>——三年后，这个赌注等来了它的对家。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2011</span>
+          <h3 class="entry__title">Watson 赢得《危险边缘》 · Siri 面世</h3>
+          <p class="entry__body">
+            IBM Watson 在电视问答节目中击败两位人类冠军；苹果把语音助手 Siri 装进手机。
+            AI 在同一年登上娱乐头条与亿万人的口袋——公众的期待被重新点燃。
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 第六章 深度学习 -->
+    <section class="chapter" id="deep">
+      <header class="chapter__head reveal">
+        <div class="chapter__num" aria-hidden="true">陆</div>
+        <h2 class="chapter__title">深度学习爆发</h2>
+        <div class="chapter__meta">
+          <span class="chapter__years">2012 — 2016</span>
+          <span class="chapter__tag">数据、算力、算法的合流</span>
+        </div>
+      </header>
+      <p class="chapter__intro reveal">
+        积蓄二十年的三股暗流在 ImageNet 赛场汇合，此后五年，深度学习以<b>一年攻陷一个领域</b>的速度推进：
+        视觉、语音、翻译、游戏、围棋。方法惊人地一致——更多数据，更大网络，更强 GPU。
+      </p>
+      <ol class="entries">
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">2012</span>
+          <h3 class="entry__title">AlexNet 的压倒性胜利 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            辛顿的学生用两块游戏显卡训练深度卷积网络，在 ImageNet 竞赛中把错误率一举拉低十个百分点——
+            往年冠军间的差距通常不到一个。<b>整个计算机视觉领域在一个秋天改换了方法论</b>，深度学习时代正式开始。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2013</span>
+          <h3 class="entry__title">word2vec · DQN 玩 Atari</h3>
+          <p class="entry__body">
+            word2vec 证明词义可以编码为向量，「国王 − 男 + 女 ≈ 女王」成为名场面；
+            DeepMind 的 DQN 只看屏幕像素就学会数十款雅达利游戏——深度学习与强化学习自此合流。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2014</span>
+          <h3 class="entry__title">生成对抗网络（GAN）</h3>
+          <p class="entry__body">
+            古德费洛提出让两个网络互相博弈：一个造假，一个鉴伪。<b>机器第一次学会了「生成」以假乱真的图像</b>——
+            生成式 AI 的概念自此立住。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2015</span>
+          <h3 class="entry__title">ResNet · TensorFlow 开源 · OpenAI 成立</h3>
+          <p class="entry__body">
+            残差网络把深度推到一百五十二层并在识别精度上超越人类水平；谷歌开源 TensorFlow 拉低了入行门槛；
+            一家以「确保通用人工智能造福全人类」为章程的实验室在旧金山成立。
+          </p>
+        </li>
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">2016</span>
+          <h3 class="entry__title">AlphaGo 四比一胜李世石 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            围棋的搜索空间远超宇宙原子数，曾被公认「至少还要十年」。第二局第三十七手，AlphaGo 落出人类棋谱之外的一子，
+            职业棋手起初判为失误，后世奉为妙手。<b>两亿人围观了「直觉」被计算复现的时刻</b>。
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 第七章 注意力时代 -->
+    <section class="chapter" id="attention">
+      <header class="chapter__head reveal">
+        <div class="chapter__num" aria-hidden="true">柒</div>
+        <h2 class="chapter__title">注意力时代</h2>
+        <div class="chapter__meta">
+          <span class="chapter__years">2017 — 2021</span>
+          <span class="chapter__tag">一种架构，一条定律</span>
+        </div>
+      </header>
+      <p class="chapter__intro reveal">
+        一篇八页论文提出的 Transformer 架构，意外成为此后所有大模型的共同底盘。
+        更关键的发现随之而来：<b>模型能力随参数、数据、算力的投入而可预测地增长</b>——「规模定律」把研究变成了工程，也变成了军备。
+      </p>
+      <ol class="entries">
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">2017</span>
+          <h3 class="entry__title">《Attention Is All You Need》 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            谷歌八位研究员提出 Transformer：抛弃循环结构，仅用「注意力」机制建模序列，训练可以完全并行。
+            论文标题当年被嫌轻佻——<b>后来它成了本世纪被引用最多的论文之一</b>，GPT 中的「T」即由此来。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2018</span>
+          <h3 class="entry__title">BERT 与 GPT：预训练范式确立</h3>
+          <p class="entry__body">
+            两条路线同年成型：先在海量文本上「预训练」，再针对任务微调。NLP 各项基准被大幅刷新，
+            <b>「大模型 + 微调」取代「一个任务一个模型」</b>，成为行业标准作业。
+          </p>
+        </li>
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">2020</span>
+          <h3 class="entry__title">GPT-3 与规模的涌现 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            一千七百五十亿参数的 GPT-3 展示出未经训练的新能力：只需几个示例便能翻译、写代码、作文——
+            这些能力并非设计所得，而是<b>随规模「涌现」</b>。同年 AlphaFold 2 实质性破解蛋白质结构预测，
+            五十年悬案落幕，AI 首次改写一门基础科学的日常。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2021</span>
+          <h3 class="entry__title">Copilot 编程 · 扩散模型登场</h3>
+          <p class="entry__body">
+            GitHub Copilot 把大模型接进程序员的编辑器，AI 结对编程成为日常；DALL·E 与扩散模型让「文字生成图像」初具可用性。
+            大模型开始从论文走向产品。
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 第八章 生成式浪潮 -->
+    <section class="chapter" id="wave">
+      <header class="chapter__head reveal">
+        <div class="chapter__num" aria-hidden="true">捌</div>
+        <h2 class="chapter__title">生成式浪潮</h2>
+        <div class="chapter__meta">
+          <span class="chapter__years">2022 — 2026</span>
+          <span class="chapter__tag">走进十亿人日常的五年</span>
+        </div>
+      </header>
+      <p class="chapter__intro reveal">
+        一个聊天框让七十年的积累在两个月内抵达一亿用户。此后每年的叙事主题依次更替：
+        <b>对话（2022）、多模态（2023）、推理（2024）、智能体（2025）</b>——编年史的最后一章，写作速度已经追不上历史本身。
+      </p>
+      <ol class="entries">
+        <li class="entry reveal">
+          <span class="entry__year">2022.8</span>
+          <h3 class="entry__title">Stable Diffusion 开源</h3>
+          <p class="entry__body">
+            高质量文生图模型连同权重全部公开，任何人可在消费级显卡上运行、改造。
+            图像生成在数月内长成一个生态，也把版权与创作伦理的争论推到台前。
+          </p>
+        </li>
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">2022.11</span>
+          <h3 class="entry__title">ChatGPT 发布 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            两个月一亿用户，史上普及最快的消费应用。技术底座早已存在，真正的引爆点是<b>把大模型装进了一个对话框</b>——
+            普通人第一次不经培训就能使唤前沿 AI。此后「AI」不再是一个行业词汇。
+          </p>
+        </li>
+        <li class="entry entry--milestone reveal">
+          <span class="entry__year">2023</span>
+          <h3 class="entry__title">GPT-4 · Claude · Llama 开放权重 <span class="stamp">里程碑</span></h3>
+          <p class="entry__body">
+            GPT-4 通过律师资格考试并读懂图像；Anthropic 发布以「有益、诚实、无害」为训练目标的 Claude；
+            Meta 开放 Llama 权重，开源模型阵营成军。<b>能力、安全、开放</b>——大模型时代的三条路线在同一年铺开，年末谷歌 Gemini 入场，竞争格局定型。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2024</span>
+          <h3 class="entry__title">推理模型元年 · 诺贝尔奖的背书</h3>
+          <p class="entry__body">
+            Sora 展示以分钟计的文生视频；OpenAI o1 让模型在作答前先「思考」，以推理时间换答案质量，开辟规模定律之外的第二条增长曲线。
+            十月，诺贝尔物理学奖授予 Hopfield 与辛顿，化学奖授予 AlphaFold 团队——<b>科学界以最高礼节承认了这门曾两度被判死刑的学科</b>。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2025</span>
+          <h3 class="entry__title">DeepSeek-R1 与智能体之年</h3>
+          <p class="entry__body">
+            年初，DeepSeek-R1 以远低于业界预期的成本复现顶级推理能力并开放权重，全球市场为之震动——
+            <b>「智能的价格」成为新变量</b>。这一年，能自主使用工具、连续执行任务的智能体（Agent）从演示走向工作流，AI 开始从「回答问题」转向「完成工作」。
+          </p>
+        </li>
+        <li class="entry reveal">
+          <span class="entry__year">2026</span>
+          <h3 class="entry__title">此刻：未完稿</h3>
+          <p class="entry__body">
+            本编年史写于 2026 年。此刻的争论——能力的边界、安全的底线、开放与封闭、泡沫与革命——
+            没有一个是新问题，也没有一个有旧答案。<b>下一个条目，由正在发生的事情书写。</b>
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 跋 -->
+    <section class="postface reveal" id="postface">
+      <h2 class="postface__head">跋</h2>
+      <div class="prose">
+        <p>
+          通读七十六年，可见三条脉络贯穿始终：<b>其一</b>，凡试图把智能写成规则者皆败，凡让机器从数据中自行学习者皆兴——
+          「苦涩的教训」在每个时代重演；<b>其二</b>，狂热与寒冬交替出现，而真正的地基总是在冬天打下；
+          <b>其三</b>，每一次「机器不可能做到 X」的断言，平均寿命不超过二十年。
+        </p>
+        <p>
+          编年史的天职是记录，不是预言。唯一可以确定的是：这部史书没有末章。
+        </p>
+        <p class="sign">人工智能编年史 · CHRONICLE OF AI · 修订于二〇二六年</p>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+(function () {
+  /* 主题切换：跟随系统，用户点击后覆盖并记忆 */
+  var root = document.documentElement;
+  var stored = null;
+  try { stored = localStorage.getItem("chronicle-theme"); } catch (e) {}
+  if (stored === "dark" || stored === "light") root.setAttribute("data-theme", stored);
+  document.getElementById("themeToggle").addEventListener("click", function () {
+    var isDark = root.getAttribute("data-theme") === "dark" ||
+      (!root.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+    var next = isDark ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("chronicle-theme", next); } catch (e) {}
+  });
+
+  /* 年代标尺跳转 */
+  document.querySelectorAll(".ruler__seg").forEach(function (seg) {
+    seg.addEventListener("click", function () {
+      var target = document.getElementById(seg.dataset.target);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  /* 滚动显现 */
+  var revealer = new IntersectionObserver(function (records) {
+    records.forEach(function (r) {
+      if (r.isIntersecting) { r.target.classList.add("is-in"); revealer.unobserve(r.target); }
+    });
+  }, { rootMargin: "0px 0px -8% 0px" });
+  document.querySelectorAll(".reveal").forEach(function (el) { revealer.observe(el); });
+
+  /* 当前纪年指示：取视口中最上方可见条目的年份 */
+  var railYear = document.getElementById("railYear");
+  var floatYear = document.getElementById("floatYear");
+  var visible = new Set();
+  function refreshYear() {
+    var topmost = null, topY = Infinity;
+    visible.forEach(function (el) {
+      var y = el.getBoundingClientRect().top;
+      if (y < topY) { topY = y; topmost = el; }
+    });
+    if (topmost) {
+      var year = topmost.querySelector(".entry__year").textContent.slice(0, 4);
+      railYear.textContent = year;
+      floatYear.textContent = year;
+    }
+  }
+  var tracker = new IntersectionObserver(function (records) {
+    records.forEach(function (r) { r.isIntersecting ? visible.add(r.target) : visible.delete(r.target); });
+    refreshYear();
+  }, { rootMargin: "-15% 0px -35% 0px" });
+  document.querySelectorAll(".entry").forEach(function (el) { tracker.observe(el); });
+
+  /* 目录高亮：当前章节 */
+  var navLinks = {};
+  document.querySelectorAll(".rail__nav a[href^='#']").forEach(function (a) {
+    navLinks[a.getAttribute("href").slice(1)] = a;
+  });
+  var chapterTracker = new IntersectionObserver(function (records) {
+    records.forEach(function (r) {
+      if (!r.isIntersecting) return;
+      Object.keys(navLinks).forEach(function (k) { navLinks[k].classList.remove("is-active"); });
+      var link = navLinks[r.target.id];
+      if (link) link.classList.add("is-active");
+    });
+  }, { rootMargin: "-30% 0px -55% 0px" });
+  document.querySelectorAll(".chapter, .postface").forEach(function (el) { chapterTracker.observe(el); });
+})();
+</script>
+</body>
+</html>
