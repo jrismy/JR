@@ -455,6 +455,46 @@
     transform: translate(-50%, -50%);
   }
 
+  /* ———— 素材加载屏 ———— */
+  #loader {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.1rem;
+    transition: opacity 0.4s;
+  }
+  #loader.off { opacity: 0; pointer-events: none; }
+  .loader-mark {
+    font-size: 1.1rem;
+    letter-spacing: 0.8em;
+    text-indent: 0.8em;
+    color: var(--gold);
+    opacity: 0.9;
+  }
+  .loader-bar {
+    width: min(280px, 66vw);
+    height: 3px;
+    background: rgba(232,226,208,0.12);
+    overflow: hidden;
+  }
+  .loader-bar .fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #8f7433, var(--gold));
+    transition: width 0.15s;
+  }
+  .loader-text {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.24em;
+    color: rgba(232,226,208,0.45);
+  }
+
   /* ———— 调试面板 ———— */
   #debug {
     position: fixed;
@@ -492,6 +532,13 @@
 </head>
 <body>
 <canvas id="stage"></canvas>
+
+<!-- 素材加载 -->
+<div id="loader">
+  <div class="loader-mark">万 妖 夜 行</div>
+  <div class="loader-bar"><div class="fill" id="loaderFill"></div></div>
+  <div class="loader-text" id="loaderText">感应灵材 …</div>
+</div>
 
 <!-- 主菜单 -->
 <div class="screen" id="menu">
