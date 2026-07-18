@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>修仙幸存者 · 万妖夜行</title>
+<style>
+  :root {
+    --ink: #0D1216;
+    --paper: #1A222B;
+    --rice: #E8E2D0;
+    --gold: #FFD890;
+    --jian: #9FD8BC;
+    --jie: #C8A0FF;
+    --ice: #BCE8F0;
+    --ghost: #7FE098;
+    --blood: #C75450;
+    --serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--ink);
+    color: var(--rice);
+    font-family: var(--serif);
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+  #stage { position: fixed; inset: 0; display: block; }
+
+  /* ———— 通用层 ———— */
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    background: transparent;
+  }
+  .hidden { display: none !important; }
+  button {
+    font-family: var(--serif);
+    color: var(--rice);
+    background: rgba(26, 34, 43, 0.82);
+    border: 1px solid rgba(232, 226, 208, 0.28);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s, transform 0.12s;
+  }
+  button:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(26, 34, 43, 0.95);
+  }
+  button:active { transform: scale(0.97); }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .menu-btn {
+    width: min(320px, 78vw);
+    padding: 0.85rem 0;
+    font-size: 1.15rem;
+    letter-spacing: 0.55em;
+    text-indent: 0.55em;
+    margin-top: 0.9rem;
+    position: relative;
+  }
+  .menu-btn::before, .menu-btn::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 26px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232,226,208,0.4));
+  }
+  .menu-btn::before { left: 12px; }
+  .menu-btn::after { right: 12px; transform: scaleX(-1); }
+
+  .back-btn {
+    position: absolute;
+    top: max(14px, env(safe-area-inset-top));
+    left: 14px;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    z-index: 5;
+  }
+
+  h1.game-title {
+    font-size: clamp(2.4rem, 9vw, 4.2rem);
+    letter-spacing: 0.28em;
+    text-indent: 0.28em;
+    font-weight: 700;
+    color: var(--rice);
+    text-shadow: 0 0 22px rgba(255, 216, 144, 0.35), 0 2px 10px rgba(0,0,0,0.7);
+  }
+  .game-subtitle {
+    margin-top: 0.7rem;
+    font-size: clamp(1rem, 3.4vw, 1.3rem);
+    letter-spacing: 0.9em;
+    text-indent: 0.9em;
+    color: var(--gold);
+    opacity: 0.9;
+  }
+  .menu-hint {
+    margin-top: 2.4rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    color: rgba(232,226,208,0.45);
+    text-align: center;
+    line-height: 2;
+  }
+
+  .screen-title {
+    font-size: clamp(1.5rem, 5vw, 2.1rem);
+    letter-spacing: 0.5em;
+    text-indent: 0.5em;
+    margin-bottom: 1.6rem;
+    color: var(--rice);
+  }
+
+  /* ———— 卡片行 ———— */
+  .card-row {
+    display: flex;
+    gap: clamp(0.6rem, 2vw, 1.2rem);
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 1rem;
+    max-width: 980px;
+  }
+  .pick-card {
+    width: min(250px, 86vw);
+    padding: 1.15rem 1.05rem 1.05rem;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .pick-card h3 {
+    font-size: 1.25rem;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+  }
+  .pick-card .tagline { font-size: 0.82rem; color: var(--jian); letter-spacing: 0.1em; }
+  .pick-card .desc { font-size: 0.82rem; line-height: 1.75; color: rgba(232,226,208,0.75); }
+
+  /* ———— HUD ———— */
+  #hud {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    font-family: var(--serif);
+  }
+  #hud .top {
+    position: absolute;
+    top: max(10px, env(safe-area-inset-top));
+    left: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .bar {
+    position: relative;
+    height: 12px;
+    background: rgba(13, 18, 22, 0.72);
+    border: 1px solid rgba(232, 226, 208, 0.22);
+    overflow: visible;
+  }
+  .bar .fill {
+    position: absolute;
+    inset: 1px auto 1px 1px;
+    width: 50%;
+    transition: width 0.15s ease-out;
+  }
+  .bar .tip {
+    position: absolute;
+    top: 50%;
+    width: 10px; height: 10px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  #hpBar .fill { background: linear-gradient(90deg, #7e3734, var(--blood)); }
+  #hpBar .tip { background: radial-gradient(circle, #ffb0a8 0%, rgba(199,84,80,0) 70%); }
+  #xpBar { height: 8px; }
+  #xpBar .fill { background: linear-gradient(90deg, #8f7433, var(--gold)); }
+  #xpBar .tip { background: radial-gradient(circle, #fff3d0 0%, rgba(255,216,144,0) 70%); }
+
+  #hud .statline {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    color: rgba(232,226,208,0.85);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  }
+  #realmText { color: var(--gold); font-size: 0.92rem; }
+  #timeText { font-family: var(--mono); font-size: 1.05rem; letter-spacing: 0.1em; }
+  #killText { font-family: var(--mono); }
+
+  #comboBox {
+    position: absolute;
+    right: 16px;
+    top: 92px;
+    text-align: right;
+    opacity: 0;
+    transition: opacity 0.25s;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+  #comboBox.on { opacity: 1; }
+  #comboNum {
+    font-family: var(--mono);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    display: block;
+  }
+  #comboBox .lab { font-size: 0.7rem; letter-spacing: 0.4em; color: rgba(232,226,208,0.7); }
+
+  #bossBarWrap {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: max(70px, calc(env(safe-area-inset-bottom) + 64px));
+    width: min(520px, 86vw);
+    display: none;
+  }
+  #bossBarWrap.on { display: block; }
+  #bossName {
+    text-align: center;
+    font-size: 0.85rem;
+    letter-spacing: 0.35em;
+    color: var(--jie);
+    margin-bottom: 4px;
+    text-shadow: 0 0 10px rgba(200,160,255,0.5);
+  }
+  #bossBar { height: 9px; }
+  #bossBar .fill { background: linear-gradient(90deg, #6d3f8f, var(--jie)); }
+
+  /* ———— 升级选卡 ———— */
+  #levelup {
+    background: rgba(13, 18, 22, 0.62);
+    backdrop-filter: blur(2px);
+    z-index: 30;
+  }
+  #levelup .screen-title { margin-bottom: 1rem; }
+  #luRealm {
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    color: var(--jian);
+    margin-bottom: 1.4rem;
+  }
+  .lu-card {
+    width: min(240px, 88vw);
+    padding: 1rem 1rem 0.9rem;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    animation: luIn 0.28s backwards;
+  }
+  .lu-card:nth-child(2) { animation-delay: 0.06s; }
+  .lu-card:nth-child(3) { animation-delay: 0.12s; }
+  @keyframes luIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+  }
+  .lu-card .kind {
+    font-size: 0.66rem;
+    letter-spacing: 0.3em;
+    color: var(--jian);
+  }
+  .lu-card h3 { font-size: 1.12rem; letter-spacing: 0.1em; color: var(--rice); }
+  .lu-card h3 .lv { font-family: var(--mono); font-size: 0.75rem; color: var(--gold); margin-left: 0.4em; }
+  .lu-card .desc { font-size: 0.8rem; line-height: 1.7; color: rgba(232,226,208,0.72); min-height: 3.4em; }
+  .lu-card.gold {
+    border-color: var(--gold);
+    box-shadow: 0 0 18px rgba(255, 216, 144, 0.25), inset 0 0 24px rgba(255, 216, 144, 0.07);
+  }
+  .lu-card.gold .kind { color: var(--gold); }
+  .lu-card.gold h3 { color: var(--gold); }
+  .lu-card.evo { border-color: var(--jie); }
+  .lu-card.evo .kind { color: var(--jie); }
+
+  /* ———— 横幅(书法) ———— */
+  #bannerLayer {
+    position: fixed; inset: 0;
+    z-index: 25;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .banner-v {
+    writing-mode: initial;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1em;
+    font-size: clamp(2.6rem, 10vw, 4.6rem);
+    font-weight: 700;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(255,216,144,0.55), 0 0 6px rgba(255,216,144,0.9), 0 3px 14px rgba(0,0,0,0.8);
+    animation: bannerLife 2.6s forwards;
+  }
+  .banner-v span {
+    display: block;
+    animation: strokeIn 0.5s backwards cubic-bezier(0.2, 1.6, 0.4, 1);
+  }
+  .banner-v.red { color: #ff8880; text-shadow: 0 0 30px rgba(199,84,80,0.7), 0 3px 14px rgba(0,0,0,0.8); }
+  .banner-v.purple { color: var(--jie); text-shadow: 0 0 30px rgba(200,160,255,0.7), 0 3px 14px rgba(0,0,0,0.8); }
+  .banner-sub {
+    position: absolute;
+    margin-top: clamp(8rem, 30vw, 13rem);
+    font-size: 0.95rem;
+    letter-spacing: 0.6em;
+    text-indent: 0.6em;
+    color: rgba(232,226,208,0.85);
+    animation: bannerLife 2.6s forwards;
+  }
+  @keyframes strokeIn {
+    from { opacity: 0; transform: scale(1.7) rotate(4deg); filter: blur(6px); }
+    to { opacity: 1; transform: none; filter: blur(0); }
+  }
+  @keyframes bannerLife {
+    0% { opacity: 0; }
+    8% { opacity: 1; }
+    78% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* ———— 妖王出场黑边 ———— */
+  #letterbox .lb {
+    position: fixed;
+    left: 0; right: 0;
+    height: 0;
+    background: linear-gradient(180deg, #05070a, #0a0e13);
+    z-index: 24;
+    transition: height 0.8s cubic-bezier(0.7, 0, 0.3, 1);
+    pointer-events: none;
+  }
+  #lbTop { top: 0; }
+  #lbBot { bottom: 0; }
+  #letterbox.on #lbTop, #letterbox.on #lbBot { height: 11vh; }
+
+  /* ———— 结算 ———— */
+  #result { background: rgba(13,18,22,0.78); z-index: 32; }
+  #resultCard {
+    width: min(420px, 90vw);
+    border: 1px solid rgba(232,226,208,0.25);
+    background: rgba(26,34,43,0.92);
+    padding: 2rem 2rem 1.6rem;
+    position: relative;
+    text-align: center;
+  }
+  #resultTitle {
+    font-size: 2rem;
+    letter-spacing: 0.5em;
+    text-indent: 0.5em;
+    margin-bottom: 1.2rem;
+  }
+  #resultTitle.gold { color: var(--gold); text-shadow: 0 0 24px rgba(255,216,144,0.5); }
+  #resultTitle.dead { color: var(--blood); }
+  #resultStats {
+    font-size: 0.9rem;
+    line-height: 2.2;
+    letter-spacing: 0.15em;
+    color: rgba(232,226,208,0.85);
+    text-align: left;
+    display: inline-block;
+  }
+  #resultStats b { color: var(--gold); font-family: var(--mono); font-weight: 400; margin-left: 0.6em; }
+  #gradeSeal {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 74px; height: 74px;
+    border: 3px solid var(--blood);
+    color: var(--blood);
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+    font-weight: 700;
+    transform: rotate(8deg);
+    animation: sealDown 0.45s 0.5s backwards cubic-bezier(0.2, 2.2, 0.4, 1);
+    text-shadow: none;
+  }
+  @keyframes sealDown {
+    from { opacity: 0; transform: rotate(8deg) scale(2.6); }
+    to { opacity: 1; transform: rotate(8deg) scale(1); }
+  }
+
+  /* ———— 设置 / 图鉴 ———— */
+  #settings .panel, #codex .panel {
+    width: min(560px, 92vw);
+    max-height: 76vh;
+    overflow-y: auto;
+    border: 1px solid rgba(232,226,208,0.22);
+    background: rgba(26,34,43,0.94);
+    padding: 1.6rem;
+  }
+  .set-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid rgba(232,226,208,0.1);
+    font-size: 0.92rem;
+    letter-spacing: 0.1em;
+  }
+  .set-row .ctl { display: flex; gap: 0.4rem; align-items: center; }
+  .set-row button { padding: 0.25rem 0.7rem; font-size: 0.8rem; }
+  .set-row button.on { border-color: var(--gold); color: var(--gold); }
+  input[type="range"] { width: 130px; accent-color: #FFD890; }
+
+  .codex-sec { margin-bottom: 1.2rem; }
+  .codex-sec h4 {
+    font-size: 0.95rem;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255,216,144,0.25);
+    padding-bottom: 0.3rem;
+  }
+  .codex-item { font-size: 0.8rem; line-height: 1.8; color: rgba(232,226,208,0.78); }
+  .codex-item b { color: var(--jian); font-weight: 600; letter-spacing: 0.08em; }
+  .codex-item.gold b { color: var(--gold); }
+
+  /* ———— 虚拟摇杆 ———— */
+  #joy {
+    position: fixed;
+    z-index: 15;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    border: 1px solid rgba(232,226,208,0.25);
+    background: rgba(26,34,43,0.3);
+    display: none;
+    pointer-events: none;
+  }
+  #joyKnob {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,216,144,0.5), rgba(255,216,144,0.12) 70%);
+    border: 1px solid rgba(255,216,144,0.5);
+    transform: translate(-50%, -50%);
+  }
+
+  /* ———— 调试面板 ———— */
+  #debug {
+    position: fixed;
+    left: 8px;
+    bottom: 8px;
+    z-index: 40;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: #7FE098;
+    background: rgba(13,18,22,0.7);
+    padding: 4px 8px;
+    pointer-events: none;
+    display: none;
+    white-space: pre;
+  }
+
+  #pauseBtn {
+    position: fixed;
+    top: max(64px, calc(env(safe-area-inset-top) + 54px));
+    right: 12px;
+    z-index: 16;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.2em;
+    pointer-events: auto;
+  }
+
+  @media (max-width: 700px) {
+    .card-row { flex-direction: column; align-items: center; }
+    .pick-card, .lu-card { width: min(340px, 90vw); }
+    .lu-card .desc { min-height: 0; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<!-- 主菜单 -->
+<div class="screen" id="menu">
+  <h1 class="game-title">修仙幸存者</h1>
+  <div class="game-subtitle">万 妖 夜 行</div>
+  <div style="height: 2.2rem"></div>
+  <button class="menu-btn" id="btnStart">启程证道</button>
+  <button class="menu-btn" id="btnCodex">功法图鉴</button>
+  <button class="menu-btn" id="btnSettings">设置</button>
+  <p class="menu-hint">WASD / 方向键移动 · 攻击全自动 · 手机拖动屏幕操纵<br>P 暂停 · F3 调试面板</p>
+</div>
+
+<!-- 角色选择 -->
+<div class="screen hidden" id="charsel">
+  <button class="back-btn" data-back="menu">← 返回</button>
+  <div class="screen-title">择 道 之 人</div>
+  <div class="card-row" id="charCards"></div>
+</div>
+
+<!-- 模式选择 -->
+<div class="screen hidden" id="modesel">
+  <button class="back-btn" data-back="charsel">← 返回</button>
+  <div class="screen-title">择 道 之 途</div>
+  <div class="card-row" id="modeCards"></div>
+</div>
+
+<!-- 图鉴 -->
+<div class="screen hidden" id="codex">
+  <button class="back-btn" data-back="menu">← 返回</button>
+  <div class="screen-title">功 法 图 鉴</div>
+  <div class="panel" id="codexPanel"></div>
+</div>
+
+<!-- 设置 -->
+<div class="screen hidden" id="settings">
+  <button class="back-btn" data-back="menu">← 返回</button>
+  <div class="screen-title">设 置</div>
+  <div class="panel" id="settingsPanel"></div>
+</div>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div class="top">
+    <div class="statline">
+      <span id="realmText">炼气一层</span>
+      <span id="timeText">00:00</span>
+      <span id="killText">斩 0</span>
+    </div>
+    <div class="bar" id="hpBar"><div class="fill"></div><div class="tip"></div></div>
+    <div class="bar" id="xpBar"><div class="fill"></div><div class="tip"></div></div>
+  </div>
+  <div id="comboBox"><span id="comboNum">0</span><span class="lab">连 斩</span></div>
+  <div id="bossBarWrap">
+    <div id="bossName">妖王</div>
+    <div class="bar" id="bossBar"><div class="fill"></div></div>
+  </div>
+</div>
+<button id="pauseBtn" class="hidden">暂停</button>
+
+<!-- 升级选卡 -->
+<div class="screen hidden" id="levelup">
+  <div class="screen-title">悟 道</div>
+  <div id="luRealm"></div>
+  <div class="card-row" id="luCards"></div>
+</div>
+
+<!-- 结算 -->
+<div class="screen hidden" id="result">
+  <div id="resultCard">
+    <div id="gradeSeal">S</div>
+    <div id="resultTitle">飞升</div>
+    <div id="resultStats"></div>
+    <div style="height:1.4rem"></div>
+    <button class="menu-btn" id="btnBackMenu" style="margin-top:0">回 山 门</button>
+  </div>
+</div>
+
+<!-- 演出层 -->
+<div id="bannerLayer"></div>
+<div id="letterbox"><div class="lb" id="lbTop"></div><div class="lb" id="lbBot"></div></div>
+
+<!-- 摇杆 / 调试 -->
+<div id="joy"><div id="joyKnob"></div></div>
+<div id="debug"></div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
