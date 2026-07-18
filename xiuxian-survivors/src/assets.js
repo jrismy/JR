@@ -12,6 +12,9 @@ import { PLAYER_FILES, ENEMY_FILES } from './appearance.js';
 //  xiuxian-survivors/assets/… → 仓库根目录的单文件 game.html
 const BASES = ['assets/', '', 'xiuxian-survivors/assets/'];
 
+// 单文件构建注入的内嵌素材（key → dataURI）；优先于文件探测
+const EMBED = (typeof window !== 'undefined' && window.__EMBEDDED_ASSETS) || {};
+
 const images = new Map();      // key → HTMLImageElement（加载成功的）
 const tintCache = new Map();   // key@hue → 离屏 canvas
 export const assetState = { total: 0, done: 0, found: 0, loaded: false };
@@ -26,6 +29,15 @@ function tryLoad(url) {
 }
 
 async function loadOne(key) {
+  // 内嵌素材最优先（单文件 game.html 自带）
+  if (EMBED[key]) {
+    const im = await tryLoad(EMBED[key]);
+    if (im && im.naturalWidth > 0) {
+      images.set(key, im);
+      assetState.found++;
+      return;
+    }
+  }
   for (const base of BASES) {
     const im = await tryLoad(base + key);
     if (im && im.naturalWidth > 0) {
