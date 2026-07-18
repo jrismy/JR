@@ -286,6 +286,9 @@ function breakthrough(realmIdx) {
   G.fx.gold = 1;
   G.cam.shake(6);
   sfx.breakthrough();
+  // 换装时刻：白光吞没 0.3s → 新外观从光中显现，旧外观平滑淡出
+  p.transformT = 0.7;
+  setTimeout(() => vfx.spawnWave(p.x, p.y, 95, '#FFF6DC', 0.5, 4), 300); // 显现金环
   // 三重错时金环
   for (let i = 0; i < 3; i++) {
     setTimeout(() => vfx.spawnWave(p.x, p.y, 180 + i * 70, C.gold, 0.7, 5 - i, true), i * 130);
@@ -526,6 +529,7 @@ function updatePlaying(dt, dtReal) {
     if (mv.x !== 0) p.face = mv.x > 0 ? 1 : -1;
   }
   p.invuln = Math.max(0, p.invuln - dt);
+  if (p.transformT > 0) p.transformT -= dtReal; // 换装演出走真实时间（慢动作中也流畅）
   // 回血
   p.hp = Math.min(p.maxHp, p.hp + p.stats.regen * dt);
   // 瞄准角

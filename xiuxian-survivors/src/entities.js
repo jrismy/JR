@@ -1,6 +1,8 @@
-import { Pool, rand, TAU, clamp, dist2, pick } from './utils.js';
+import { Pool, rand, TAU, clamp, dist2, pick, easeOutBack } from './utils.js';
 import { C, ENEMY_TYPES, ENEMY_SCALE_PER_MIN, BOSS, BOSS_NAMES, TRIBULATION, PICKUP, REALMS, XP_INFLATION_PER_MIN } from './data.js';
 import * as vfx from './vfx.js';
+import * as A from './assets.js';
+import { SHEET, REALM_LOOK, ENEMY_SKIN } from './appearance.js';
 import { sfx } from './audio.js';
 
 // ============================================================
@@ -14,6 +16,7 @@ export function createPlayer(charDef) {
     level: 1, xp: 0,
     realm: 0, realmSub: 1, // 大境界索引 / 层数(1-9)
     invuln: 0,
+    transformT: 0, // 突破换装演出计时（0.7s：0.3 白光吞没 + 0.4 新装显现）
     charDef,
     weapons: [],   // {id, lv, timer, evolved, ...}
     passives: {},  // id -> lv
@@ -376,13 +379,20 @@ export function drawEnemies(rc, G) {
     ent.translate(e.x, e.y);
     ent.scale(scale * sq, scale * (2 - sq) * 0.5 + scale * 0.5);
     ent.globalAlpha = alpha;
-    const spr = bodySprite(e.color, e.r, e.tier);
-    ent.drawImage(spr, -spr.width / 2, -spr.height / 2);
-    // 眼睛
-    if (e.dying <= 0) {
-      const er = Math.max(2.5, e.r * 0.2);
-      ent.drawImage(eyeSpr, -e.r * 0.35 - er, -e.r * 0.25 - er, er * 2, er * 2);
-      ent.drawImage(eyeSpr, e.r * 0.35 - er, -e.r * 0.25 - er, er * 2, er * 2);
+    // 可选敌人皮肤（缺失回退墨团）
+    const skin = G.settings.skin !== 'classic' ? A.img(ENEMY_SKIN[e.tier]) : null;
+    if (skin) {
+      const flip = G.player && G.player.x < e.x ? -1 : 1;
+      A.drawSprite(ent, skin, 0, 1, 0, e.r, e.r * 2.4, flip, alpha, 1);
+    } else {
+      const spr = bodySprite(e.color, e.r, e.tier);
+      ent.drawImage(spr, -spr.width / 2, -spr.height / 2);
+      // 眼睛
+      if (e.dying <= 0) {
+        const er = Math.max(2.5, e.r * 0.2);
+        ent.drawImage(eyeSpr, -e.r * 0.35 - er, -e.r * 0.25 - er, er * 2, er * 2);
+        ent.drawImage(eyeSpr, e.r * 0.35 - er, -e.r * 0.25 - er, er * 2, er * 2);
+      }
     }
     // 受击白闪一帧
     if (e.flash > 0.02) {
@@ -499,19 +509,14 @@ export function drawGems(rc, G) {
 }
 
 // ============================================================
-// 玩家绘制：墨衣修士 + 境界光环
+// 玩家绘制：分层外观（base+robe+accessory+aura）→ 缺素材回退矢量墨衣修士
 // ============================================================
-export function drawPlayer(rc, G) {
-  const { ent, glow } = rc;
-  const p = G.player;
-  const t = p.animT;
-  const inv = p.invuln > 0 && (t * 20) % 2 < 1; // 无敌闪烁
+// 矢量版（经典绘制 / 回退）
+function drawVectorPlayer(ent, p, t, alpha, scale, bob) {
   ent.save();
-  ent.translate(p.x, p.y);
-  const bob = p.moving ? Math.sin(t * 11) * 1.6 : Math.sin(t * 2.4) * 1;
-  ent.translate(0, bob);
-  ent.scale(p.face, 1);
-  ent.globalAlpha = inv ? 0.45 : 1;
+  ent.translate(p.x, p.y + bob);
+  ent.scale(p.face * scale, scale);
+  ent.globalAlpha = alpha;
   // 长袍（墨色，底摆随动）
   ent.beginPath();
   ent.moveTo(0, -14);
@@ -541,13 +546,69 @@ export function drawPlayer(rc, G) {
   ent.quadraticCurveTo(-13 - Math.sin(t * 7) * 3, 4, -17 - Math.sin(t * 6) * 4, 10);
   ent.stroke();
   ent.restore();
+  ent.globalAlpha = 1;
+}
+// 素材版：base + robe(色调偏移) + accessory 逐层合成；base 缺失返回 false 整体回退
+function drawAssetPlayer(rc, p, realm, alpha, scale, bob) {
+  const anim = p.moving ? 'run' : 'idle';
+  const cfg = SHEET[anim];
+  const baseImg = A.img(`player/base_${anim}.png`);
+  if (!baseImg) return false;
+  const frame = Math.floor(p.animT * cfg.fps) % cfg.frames;
+  const look = REALM_LOOK[clamp(realm, 0, REALM_LOOK.length - 1)];
+  const x = p.x, y = p.y + 15 + bob;
+  const H = SHEET.targetH;
+  const ent = rc.ent;
+  A.drawSprite(ent, baseImg, frame, cfg.frames, x, y, H, p.face, alpha, scale);
+  if (look.layers.includes('robe')) {
+    const robe = A.tinted(`player/robe_${anim}.png`, look.robeHue);
+    if (robe) A.drawSprite(ent, robe, frame, cfg.frames, x, y, H, p.face, alpha, scale);
+  }
+  if (look.accessory) {
+    const acc = A.img(look.accessory);
+    if (acc) A.drawSprite(ent, acc, 0, 1, x, y, H, p.face, alpha, scale);
+  }
+  return true;
+}
 
-  // 境界光环（辉光层）：境界越高越大越金
-  const realmT = p.realm / 9;
-  const auraCol = realmT > 0.6 ? C.gold : (realmT > 0.3 ? '#D9DFB8' : C.jian);
-  const auraSpr = vfx.glowSprite(auraCol, 64);
-  const ar = 26 + p.realm * 5 + Math.sin(t * 3) * 3;
-  glow.globalAlpha = 0.28 + realmT * 0.3;
+export function drawPlayer(rc, G) {
+  const { ent, glow } = rc;
+  const p = G.player;
+  const t = p.animT;
+  const bob = p.moving ? Math.sin(t * 11) * 1.6 : Math.sin(t * 2.4) * 1;
+  // 突破换装时刻：0–0.3s 白光吞没旧装淡出 → 0.3–0.7s 新装从光中显现
+  let drawRealm = p.realm, alpha = 1, scale = 1, whiteGlow = 0;
+  if (p.transformT > 0) {
+    const e = 0.7 - p.transformT;
+    if (e < 0.3) {
+      drawRealm = Math.max(0, p.realm - 1);
+      alpha = 1 - e / 0.3;
+      whiteGlow = e / 0.3;
+    } else {
+      const k = clamp((e - 0.3) / 0.4, 0, 1);
+      scale = 0.6 + 0.4 * easeOutBack(k);
+      whiteGlow = 1 - k;
+    }
+  }
+  if (p.invuln > 0 && (t * 20) % 2 < 1) alpha *= 0.45; // 无敌闪烁
+  // 皮肤选择：素材皮肤缺 base 时自动回退矢量
+  const useAssets = G.settings.skin !== 'classic';
+  const drew = useAssets && drawAssetPlayer(rc, p, drawRealm, alpha, scale, bob);
+  if (!drew && alpha > 0.02) drawVectorPlayer(ent, p, t, alpha, scale, bob);
+  // 白光吞没
+  if (whiteGlow > 0) {
+    const ws = vfx.glowSprite('#FFFFFF', 64);
+    const wr = 40 + whiteGlow * 22;
+    glow.globalAlpha = whiteGlow * 0.95;
+    glow.drawImage(ws, p.x - wr, p.y - wr + bob * 0.5, wr * 2, wr * 2);
+    glow.globalAlpha = 1;
+  }
+
+  // 境界光环（辉光层，appearance 配置驱动）
+  const look = REALM_LOOK[clamp(drawRealm, 0, REALM_LOOK.length - 1)].aura;
+  const auraSpr = vfx.glowSprite(look.color, 64);
+  const ar = look.radius + Math.sin(t * 3) * 3;
+  glow.globalAlpha = look.strength * (0.8 + Math.sin(t * 2.2) * 0.2) * Math.max(alpha, 0.4);
   glow.drawImage(auraSpr, p.x - ar, p.y - ar + bob * 0.5, ar * 2, ar * 2);
   glow.globalAlpha = 1;
   // 护盾指示

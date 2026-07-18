@@ -7,6 +7,7 @@ let H = null; // 回调集合（game.js 注入）
 export const settings = {
   shake: true, dmgNumbers: true,
   quality: 'auto', // 'auto' | 0 | 1 | 2
+  skin: 'assets',  // 'assets' 素材皮肤（缺图自动回退）| 'classic' 经典绘制
   sfxVol: 0.7, bgmVol: 0.5,
 };
 function loadSettings() {
@@ -217,6 +218,26 @@ function buildSettings() {
   };
   row('震屏', toggle('shake'));
   row('伤害数字', toggle('dmgNumbers'));
+  // 皮肤切换：经典绘制 / 素材皮肤
+  const swrap = document.createElement('div');
+  swrap.className = 'ctl';
+  for (const [val, name] of [['classic', '经典绘制'], ['assets', '素材皮肤']]) {
+    const b = document.createElement('button');
+    b.textContent = name;
+    b.classList.toggle('on', settings.skin === val);
+    b.onclick = () => {
+      settings.skin = val;
+      saveSettings();
+      swrap.querySelectorAll('button').forEach((x) => x.classList.remove('on'));
+      b.classList.add('on');
+    };
+    swrap.appendChild(b);
+  }
+  const sr = document.createElement('div');
+  sr.className = 'set-row';
+  sr.innerHTML = '<span>角色皮肤</span>';
+  sr.appendChild(swrap);
+  el.appendChild(sr);
   // 画质档
   const qwrap = document.createElement('div');
   qwrap.className = 'ctl';
