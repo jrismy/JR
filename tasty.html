@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>吞噬寰宇 · 从原子到世界龟</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: #0A1420;
+    font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+    color: #EAF2EE;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #cv { position: fixed; inset: 0; display: block; cursor: crosshair; }
+
+  /* ———— HUD ———— */
+  #hud {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    left: 14px;
+    right: 14px;
+    z-index: 5;
+    pointer-events: none;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+  }
+  #sizeText {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
+  }
+  #stageText { font-size: 0.85rem; letter-spacing: 0.3em; opacity: 0.85; margin-top: 2px; }
+  #eatText {
+    position: absolute;
+    right: 0; top: 0;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.9rem;
+    text-align: right;
+    opacity: 0.9;
+  }
+  #progWrap {
+    position: fixed;
+    left: 14px; right: 14px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    height: 4px;
+    background: rgba(255,255,255,0.12);
+    z-index: 5;
+    pointer-events: none;
+  }
+  #progFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #58C0A8, #FFD890);
+    transition: width 0.3s;
+  }
+  #progWrap .mark {
+    position: absolute;
+    top: -3px;
+    width: 1px; height: 10px;
+    background: rgba(255,255,255,0.25);
+  }
+
+  /* ———— 提示 / 横幅 ———— */
+  #toast {
+    position: fixed;
+    left: 50%;
+    top: 18%;
+    transform: translateX(-50%);
+    z-index: 6;
+    pointer-events: none;
+    text-align: center;
+  }
+  .toastItem {
+    font-size: 0.95rem;
+    letter-spacing: 0.2em;
+    color: #FFE9BC;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+    animation: toastLife 2s forwards;
+    margin-top: 4px;
+  }
+  @keyframes toastLife {
+    0% { opacity: 0; transform: translateY(8px); }
+    12% { opacity: 1; transform: none; }
+    75% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-8px); }
+  }
+  #stageBanner {
+    position: fixed;
+    left: 50%; top: 34%;
+    transform: translateX(-50%);
+    z-index: 6;
+    pointer-events: none;
+    font-size: clamp(1.8rem, 6vw, 3rem);
+    font-weight: 700;
+    letter-spacing: 0.55em;
+    text-indent: 0.55em;
+    color: #EAF2EE;
+    text-shadow: 0 0 26px rgba(255,216,144,0.5), 0 2px 12px rgba(0,0,0,0.9);
+    opacity: 0;
+    transition: opacity 0.6s;
+    white-space: nowrap;
+  }
+  #stageBanner.on { opacity: 1; }
+
+  /* ———— 开场 / 结局 ———— */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.1rem;
+    background: rgba(6, 10, 16, 0.82);
+    backdrop-filter: blur(3px);
+    text-align: center;
+    padding: 2rem;
+    transition: opacity 0.6s;
+  }
+  .overlay.hidden { opacity: 0; pointer-events: none; }
+  .ov-title {
+    font-size: clamp(2.2rem, 8vw, 3.6rem);
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+    text-shadow: 0 0 30px rgba(88,192,168,0.5);
+  }
+  .ov-sub { font-size: 0.95rem; letter-spacing: 0.25em; opacity: 0.85; line-height: 2.2; }
+  .ov-note { font-size: 0.75rem; opacity: 0.5; letter-spacing: 0.15em; line-height: 2; }
+  .ov-btn {
+    margin-top: 1rem;
+    font-family: inherit;
+    font-size: 1.1rem;
+    letter-spacing: 0.5em;
+    text-indent: 0.5em;
+    color: #EAF2EE;
+    background: rgba(88,192,168,0.12);
+    border: 1px solid rgba(88,192,168,0.6);
+    padding: 0.8rem 2.6rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ov-btn:hover { background: rgba(88,192,168,0.28); box-shadow: 0 0 24px rgba(88,192,168,0.35); }
+  #endStats {
+    font-size: 0.92rem;
+    line-height: 2.4;
+    letter-spacing: 0.15em;
+    opacity: 0.9;
+  }
+  #endStats b { color: #FFD890; font-family: ui-monospace, Menlo, monospace; font-weight: 400; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="hud" style="display:none">
+  <div id="sizeText">100 pm</div>
+  <div id="stageText">原子之海</div>
+  <div id="eatText">吞噬 0</div>
+</div>
+<div id="progWrap" style="display:none"><div id="progFill"></div></div>
+<div id="toast"></div>
+<div id="stageBanner"></div>
+
+<div class="overlay" id="intro">
+  <div class="ov-title">吞噬寰宇</div>
+  <div class="ov-sub">致敬《美味星球》<br>从一颗原子，到驮着宇宙的神龟</div>
+  <div class="ov-note">移动鼠标 / 按住屏幕引导它 · 只能吞下比你小的东西<br>比你大的东西会撞掉你的质量 —— 但你永远不会死，只会更饿</div>
+  <button class="ov-btn" id="btnStart">开 始 吞 噬</button>
+</div>
+
+<div class="overlay hidden" id="ending">
+  <div class="ov-title" style="letter-spacing:0.5em">吞 噬 尽 矣</div>
+  <div class="ov-sub" id="endPoem">阿图因沉默地看了你很久。<br>然后，你张开了嘴。</div>
+  <div id="endStats"></div>
+  <button class="ov-btn" id="btnAgain">再 来 一 口</button>
+</div>
+
+<script>
+'use strict';
+// ============================================================
+// 吞噬寰宇 —— 对数连续成长的吞噬游戏
+// 世界以"本地单位"存储，玩家半径超阈值时整体重缩放（视觉无缝），
+// unitScale 记录 1 本地单位 = 多少米；生态按绝对尺寸自动更替。
+// ============================================================
+const TAU = Math.PI * 2;
+const rand = (a = 1, b) => (b === undefined ? Math.random() * a : a + Math.random() * (b - a));
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const lerp = (a, b, t) => a + (b - a) * t;
+const pick = (arr) => arr[(Math.random() * arr.length) | 0];
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(2, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = Math.ceil(W * DPR);
+  cv.height = Math.ceil(H * DPR);
+}
+addEventListener('resize', resize);
+resize();
+
+// ———— 音频（全合成）————
+let AC = null, master = null;
+function audioInit() {
+  if (AC) return;
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  master = AC.createGain(); master.gain.value = 0.5; master.connect(AC.destination);
+}
+function tone(type, f0, f1, dur, peak, when = 0) {
+  if (!AC) return;
+  const t = AC.currentTime + when;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(peak, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(master);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+let lastPop = 0;
+function sndPop(rel) { // 吞噬：音高随相对大小
+  if (!AC) return;
+  const now = AC.currentTime;
+  if (now - lastPop < 0.04) return;
+  lastPop = now;
+  const f = 420 + rel * 500 + rand(-30, 30);
+  tone('sine', f, f * 1.7, 0.12, 0.18);
+}
+function sndHurt() { tone('square', 140, 70, 0.2, 0.2); }
+function sndStage() { [440, 554, 659, 880].forEach((f, i) => tone('triangle', f, f, 0.5, 0.1, i * 0.08)); }
+function sndEnd() { [523, 659, 784, 1046, 1318].forEach((f, i) => tone('sine', f, f, 1.6, 0.12, i * 0.15)); }
+
+// ———— 尺寸格式化 ————
+function fmtSize(m) {
+  const A = [
+    [1e-12, 1e-9, 1e12, '皮米'], [1e-9, 1e-6, 1e9, '纳米'], [1e-6, 1e-3, 1e6, '微米'],
+    [1e-3, 1e-2, 1e3, '毫米'], [1e-2, 1, 1e2, '厘米'], [1, 1e3, 1, '米'],
+    [1e3, 1.5e11, 1e-3, '千米'],
+  ];
+  for (const [lo, hi, k, u] of A) {
+    if (m >= lo && m < hi) {
+      const v = m * k;
+      return (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)) + ' ' + u;
+    }
+  }
+  const LY = 9.46e15;
+  if (m < LY) { const v = m / 1.5e11; return (v >= 10 ? v.toFixed(0) : v.toFixed(2)) + ' 天文单位'; }
+  if (m < LY * 1e4) { const v = m / LY; return (v >= 10 ? v.toFixed(0) : v.toFixed(2)) + ' 光年'; }
+  if (m < LY * 1e8) { return (m / LY / 1e4).toFixed(1) + ' 万光年'; }
+  return (m / LY / 1e8).toFixed(2) + ' 亿光年';
+}
+
+// ———— 背景主题（按 S = log10(玩家半径m) 连续插值）————
+const BG_KEYS = [
+  // [S, 顶色, 底色, 尘点色, 尘点密度]
+  [-10.6, [10, 18, 30], [16, 30, 44], [120, 220, 235], 0.6],   // 量子之海
+  [-7.5, [12, 28, 34], [20, 46, 52], [130, 230, 200], 0.7],    // 细胞液
+  [-4.8, [30, 26, 20], [48, 40, 26], [190, 170, 130], 0.8],    // 尘土
+  [-2.6, [24, 34, 18], [44, 62, 30], [150, 200, 110], 0.7],    // 草叶之下
+  [-0.6, [40, 48, 38], [70, 82, 58], [180, 190, 160], 0.5],    // 街面草地
+  [1.4, [52, 56, 58], [80, 84, 82], [200, 200, 195], 0.4],     // 城市水泥
+  [3.4, [36, 52, 40], [62, 76, 52], [170, 200, 150], 0.4],     // 航拍大地
+  [5.4, [22, 36, 52], [30, 56, 78], [180, 220, 240], 0.3],     // 高空与海
+  [6.8, [8, 12, 22], [12, 18, 32], [230, 235, 245], 0.9],      // 近地空间
+  [10, [6, 8, 18], [10, 12, 26], [235, 235, 250], 1],          // 深空
+  [16, [10, 6, 22], [16, 10, 34], [220, 200, 255], 0.9],       // 星云际
+  [21, [12, 6, 24], [20, 10, 38], [235, 215, 255], 0.7],       // 星系之海
+  [25.5, [16, 8, 26], [26, 12, 40], [255, 230, 250], 0.5],     // 宇宙之网
+  [27.5, [4, 2, 8], [8, 4, 14], [120, 110, 140], 0.2],         // 虚空
+];
+function bgAt(S) {
+  let i = 0;
+  while (i < BG_KEYS.length - 2 && S > BG_KEYS[i + 1][0]) i++;
+  const a = BG_KEYS[i], b = BG_KEYS[i + 1];
+  const t = clamp((S - a[0]) / (b[0] - a[0]), 0, 1);
+  const mix = (x, y) => [lerp(x[0], y[0], t), lerp(x[1], y[1], t), lerp(x[2], y[2], t)];
+  return { top: mix(a[1], b[1]), bot: mix(a[2], b[2]), dot: mix(a[3], b[3]), den: lerp(a[4], b[4], t) };
+}
+const rgb = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+
+// ———— 阶段横幅 ————
+const STAGES = [
+  [-10.6, '原子之海'], [-8.4, '微观巨物'], [-6.6, '微生物浊流'], [-4.9, '尘埃与花粉'],
+  [-3.3, '虫豸之地'], [-1.7, '草间兽群'], [-0.5, '人间街头'], [0.7, '车流屋顶'],
+  [1.9, '高楼森林'], [3.1, '山河大地'], [4.7, '云上大陆'], [6.1, '行星轨道'],
+  [7.7, '恒星之间'], [10.3, '星海孤航'], [14, '星云弥漫'], [17.5, '星系之海'],
+  [21.5, '星系团'], [24.2, '宇宙之网'], [25.9, '万物尽头'],
+];
+function stageAt(S) {
+  let name = STAGES[0][1];
+  for (const [s, n] of STAGES) if (S >= s) name = n;
+  return name;
+}
+
+// ============================================================
+// 生物图鉴：每类有典型绝对半径 rm(米)、出现的玩家尺度门 [ps0,ps1]、
+// 行为与画法。画法在"半径=1"空间中绘制。
+// ============================================================
+function C(x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); }
+function EL(x, y, rx, ry, rot = 0) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, rot, 0, TAU); }
+function F(c) { ctx.fillStyle = c; ctx.fill(); }
+function ST(c, w) { ctx.strokeStyle = c; ctx.lineWidth = w; ctx.stroke(); }
+
+// —— 微观 ——
+function dAtom(e, t, core, ring) {
+  C(0, 0, 0.32); F(core);
+  ctx.globalAlpha = 0.55;
+  C(0, 0, 0.85); ST(ring, 0.06);
+  ctx.globalAlpha = 1;
+  const a = t * 3 + e.ph;
+  C(Math.cos(a) * 0.85, Math.sin(a) * 0.85, 0.12); F('#BCE8F0');
+}
+function dMolecule(e, t) { // 水分子
+  C(0, 0.15, 0.5); F('#C75450');
+  C(-0.5, -0.35, 0.3); F('#E8F0F2');
+  C(0.5, -0.35, 0.3); F('#E8F0F2');
+}
+function dSugar(e, t) {
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TAU + e.ph;
+    C(Math.cos(a) * 0.55, Math.sin(a) * 0.55, 0.3); F(i % 2 ? '#E8E2D0' : '#D8C8A0');
+  }
+}
+function dProtein(e, t) {
+  for (let i = 0; i < 5; i++) {
+    const a = e.ph + i * 2.1;
+    C(Math.cos(a) * 0.45 * (i / 5 + 0.3), Math.sin(a) * 0.5 * (i / 5 + 0.3), 0.36); F(i % 2 ? '#9FD8BC' : '#7FB89C');
+  }
+}
+function dDNA(e, t) {
+  ctx.lineWidth = 0.09;
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    for (let i = 0; i <= 10; i++) {
+      const y = -1 + i * 0.2;
+      const x = Math.sin(y * 3.5 + e.ph) * 0.4 * s;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.strokeStyle = '#9FD8BC'; ctx.stroke();
+  }
+  for (let i = 0; i <= 5; i++) {
+    const y = -0.9 + i * 0.38;
+    const x = Math.sin(y * 3.5 + e.ph) * 0.4;
+    ctx.beginPath(); ctx.moveTo(-x, y); ctx.lineTo(x, y);
+    ST('#E8E2D0', 0.06);
+  }
+}
+function dVirus(e, t) {
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * TAU + e.ph;
+    ctx.beginPath(); ctx.moveTo(Math.cos(a) * 0.6, Math.sin(a) * 0.6);
+    ctx.lineTo(Math.cos(a) * 1, Math.sin(a) * 1);
+    ST('#C8A0FF', 0.1);
+    C(Math.cos(a), Math.sin(a), 0.1); F('#C8A0FF');
+  }
+  C(0, 0, 0.62); F('#8A6E9E');
+  C(-0.15, -0.15, 0.18); F('rgba(255,255,255,0.25)');
+}
+function dPhage(e, t) {
+  ctx.save(); ctx.rotate(e.ph * 0.3);
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) { const a = i / 6 * TAU - Math.PI / 2; const x = Math.cos(a) * 0.5, y = Math.sin(a) * 0.5 - 0.4; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.closePath(); F('#B8A0D8'); ST('#E0D0F8', 0.05);
+  ctx.beginPath(); ctx.moveTo(0, 0.1); ctx.lineTo(0, 0.45); ST('#B8A0D8', 0.1);
+  for (const s of [-1, 0, 1]) {
+    ctx.beginPath(); ctx.moveTo(0, 0.45); ctx.lineTo(s * 0.5, 1); ST('#B8A0D8', 0.07);
+  }
+  ctx.restore();
+}
+function dBacteria(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  EL(0, 0, 1, 0.5); F('#7FB89C'); ST('#A8D8C0', 0.07);
+  C(0.3, 0, 0.14); F('rgba(20,40,30,0.5)');
+  ctx.beginPath(); ctx.moveTo(-1, 0);
+  for (let i = 1; i <= 4; i++) ctx.lineTo(-1 - i * 0.18, Math.sin(t * 14 + i * 2) * 0.2);
+  ST('#A8D8C0', 0.06);
+  ctx.restore();
+}
+function dAlgae(e, t) {
+  C(0, 0, 1); F('rgba(110,180,110,0.4)');
+  for (let i = 0; i < 5; i++) { const a = e.ph + i * 1.7; C(Math.cos(a) * 0.45, Math.sin(a) * 0.45, 0.3); F('#6EB46E'); }
+}
+function dParamecium(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  EL(0, 0, 1, 0.45); F('rgba(190,210,200,0.75)'); ST('#D8E8E0', 0.05);
+  for (let i = 0; i < 12; i++) {
+    const a = i / 12 * TAU;
+    const x = Math.cos(a), y = Math.sin(a) * 0.45;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x * 1.14, y * 1.3); ST('rgba(220,235,230,0.6)', 0.035);
+  }
+  EL(0.2, 0, 0.3, 0.18); F('rgba(120,150,140,0.8)');
+  ctx.restore();
+}
+// —— 尘与虫 ——
+function dPollen(e, t) {
+  C(0, 0, 0.7); F('#E8D890');
+  for (let i = 0; i < 8; i++) { const a = i / 8 * TAU + e.ph; C(Math.cos(a) * 0.75, Math.sin(a) * 0.75, 0.15); F('#D8C060'); }
+}
+function dDust(e, t) {
+  for (let i = 0; i < 5; i++) { const a = e.ph + i * 1.9; C(Math.cos(a) * 0.38, Math.sin(a) * 0.38, 0.42); F('rgba(150,140,120,0.7)'); }
+}
+function dSand(e, t) { C(0, 0, 0.9); F('#C0A878'); C(-0.25, -0.25, 0.25); F('rgba(255,255,255,0.25)'); }
+function dMite(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx) + Math.PI / 2);
+  for (const s of [-1, 1]) for (let i = 0; i < 4; i++) {
+    ctx.beginPath(); ctx.moveTo(s * 0.5, -0.5 + i * 0.3);
+    ctx.lineTo(s * (0.9 + Math.sin(t * 16 + i) * 0.1), -0.6 + i * 0.34); ST('#8A7660', 0.08);
+  }
+  EL(0, 0.1, 0.62, 0.75); F('#A89078'); EL(0, -0.6, 0.3, 0.28); F('#8A7660');
+  ctx.restore();
+}
+function dAphid(e, t) { EL(0, 0, 0.55, 0.75); F('#A8C878'); C(0, -0.55, 0.22); F('#88A858'); }
+function dAnt(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx) + Math.PI / 2);
+  for (const s of [-1, 1]) for (let i = 0; i < 3; i++) {
+    ctx.beginPath(); ctx.moveTo(s * 0.2, -0.2 + i * 0.25);
+    ctx.lineTo(s * (0.75 + Math.sin(t * 18 + i * 2 + (s > 0 ? 0 : 3)) * 0.12), -0.35 + i * 0.3); ST('#4A3626', 0.07);
+  }
+  EL(0, 0.55, 0.34, 0.45); F('#5C4430');
+  EL(0, 0, 0.22, 0.28); F('#4A3626');
+  C(0, -0.5, 0.26); F('#5C4430');
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 0.12, -0.7); ctx.lineTo(s * 0.3, -0.95); ST('#4A3626', 0.05); }
+  ctx.restore();
+}
+function dBeetle(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx) + Math.PI / 2);
+  for (const s of [-1, 1]) for (let i = 0; i < 3; i++) {
+    ctx.beginPath(); ctx.moveTo(s * 0.4, -0.3 + i * 0.3);
+    ctx.lineTo(s * (0.85 + Math.sin(t * 14 + i) * 0.08), -0.4 + i * 0.35); ST('#2A3020', 0.08);
+  }
+  EL(0, 0.05, 0.62, 0.8); F('#3E5230'); ST('#5A7444', 0.06);
+  ctx.beginPath(); ctx.moveTo(0, -0.7); ctx.lineTo(0, 0.8); ST('#2A3020', 0.05);
+  C(0, -0.75, 0.24); F('#2A3020');
+  ctx.restore();
+}
+function dSpider(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx) + Math.PI / 2);
+  for (const s of [-1, 1]) for (let i = 0; i < 4; i++) {
+    ctx.beginPath(); ctx.moveTo(s * 0.2, -0.3 + i * 0.22);
+    ctx.quadraticCurveTo(s * 0.8, -0.6 + i * 0.28 + Math.sin(t * 12 + i) * 0.08, s * 1, -0.2 + i * 0.3);
+    ST('#3A3230', 0.07);
+  }
+  C(0, 0.3, 0.5); F('#4A403C'); C(0, -0.35, 0.3); F('#3A3230');
+  C(-0.1, -0.42, 0.05); F('#C75450'); C(0.1, -0.42, 0.05); F('#C75450');
+  ctx.restore();
+}
+function dRoach(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx) + Math.PI / 2);
+  EL(0, 0, 0.5, 0.85); F('#6E4A2E'); ST('#8A6240', 0.05);
+  C(0, -0.8, 0.2); F('#5A3A22');
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 0.1, -0.95); ctx.quadraticCurveTo(s * 0.5, -1.4, s * 0.8, -1.3); ST('#5A3A22', 0.04); }
+  ctx.restore();
+}
+// —— 小动物 ——
+function dFrog(e, t) {
+  EL(0, 0.1, 0.8, 0.65); F('#5C9C50');
+  for (const s of [-1, 1]) {
+    C(s * 0.4, -0.5, 0.25); F('#5C9C50');
+    C(s * 0.4, -0.55, 0.12); F('#F0F0E0'); C(s * 0.4, -0.55, 0.06); F('#202820');
+    EL(s * 0.7, 0.45, 0.3, 0.18, s * 0.6); F('#4A8440');
+  }
+}
+function dMouse(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  EL(0, 0, 0.9, 0.55); F('#9A8E86');
+  C(0.75, -0.1, 0.3); F('#9A8E86');
+  C(0.62, -0.4, 0.2); F('#C0B4AC'); C(0.62, -0.4, 0.1); F('#E8B4C0');
+  C(0.95, -0.1, 0.05); F('#2A2422');
+  ctx.beginPath(); ctx.moveTo(-0.85, 0); ctx.quadraticCurveTo(-1.4, 0.2, -1.7, Math.sin(t * 6) * 0.2); ST('#B09488', 0.08);
+  ctx.restore();
+}
+function dSparrow(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  EL(0, 0, 0.8, 0.55); F('#9A7658');
+  EL(-0.1, -0.1, 0.45, 0.3, -0.4 + Math.sin(t * 20) * 0.25); F('#7A5A40');
+  C(0.62, -0.25, 0.32); F('#9A7658');
+  ctx.beginPath(); ctx.moveTo(0.9, -0.25); ctx.lineTo(1.15, -0.18); ctx.lineTo(0.9, -0.1); ctx.closePath(); F('#E8B850');
+  C(0.7, -0.32, 0.06); F('#201A16');
+  ctx.beginPath(); ctx.moveTo(-0.75, 0); ctx.lineTo(-1.2, -0.15); ctx.lineTo(-1.1, 0.15); ctx.closePath(); F('#7A5A40');
+  ctx.restore();
+}
+function dCat(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx)); const fl = e.vx < 0 ? -1 : 1;
+  EL(0, 0, 0.95, 0.5); F('#C89858');
+  C(0.75, -0.35, 0.38); F('#C89858');
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0.75 + s * 0.28, -0.6); ctx.lineTo(0.75 + s * 0.16, -0.9); ctx.lineTo(0.75 + s * 0.02, -0.62); ctx.closePath(); F('#B08048'); }
+  C(0.68, -0.4, 0.05); F('#203020'); C(0.88, -0.4, 0.05); F('#203020');
+  ctx.beginPath(); ctx.moveTo(-0.9, -0.1); ctx.quadraticCurveTo(-1.35, -0.5, -1.25, -0.9 + Math.sin(t * 4) * 0.1); ST('#B08048', 0.12);
+  ctx.restore();
+}
+function dDog(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  EL(0, 0, 1, 0.55); F('#8A6E50');
+  C(0.8, -0.35, 0.4); F('#8A6E50');
+  EL(1.05, -0.28, 0.22, 0.14); F('#6E543C');
+  EL(0.62, -0.62, 0.14, 0.26, 0.5); F('#6E543C');
+  C(0.75, -0.42, 0.06); F('#1A1410');
+  ctx.beginPath(); ctx.moveTo(-0.95, -0.1); ctx.lineTo(-1.35, -0.5 + Math.sin(t * 10) * 0.15); ST('#6E543C', 0.14);
+  ctx.restore();
+}
+// —— 人类世界 ——
+function dHuman(e, t) {
+  const run = Math.min(1, Math.hypot(e.vx, e.vy) / (e.r * 1.2));
+  const sw = Math.sin(t * 10 + e.ph) * 0.35 * run;
+  ctx.save(); if (e.vx < 0) ctx.scale(-1, 1);
+  ctx.beginPath(); ctx.moveTo(0, 0.15); ctx.lineTo(-0.25 + sw * 0.4, 0.95); ST('#3A4250', 0.16);
+  ctx.beginPath(); ctx.moveTo(0, 0.15); ctx.lineTo(0.25 - sw * 0.4, 0.95); ST('#3A4250', 0.16);
+  ctx.beginPath(); ctx.moveTo(0, -0.5); ctx.lineTo(0, 0.2); ST(e.col || '#7A9CB8', 0.24);
+  ctx.beginPath(); ctx.moveTo(0, -0.35); ctx.lineTo(-0.3, 0.05 + sw); ST(e.col || '#7A9CB8', 0.12);
+  ctx.beginPath(); ctx.moveTo(0, -0.35); ctx.lineTo(0.3, 0.05 - sw); ST(e.col || '#7A9CB8', 0.12);
+  C(0, -0.72, 0.22); F('#E8C9A0');
+  ctx.beginPath(); ctx.arc(0, -0.78, 0.22, Math.PI, 0); F('#3A3230');
+  ctx.restore();
+}
+function dBike(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  C(-0.5, 0.3, 0.34); ST('#586068', 0.07);
+  C(0.5, 0.3, 0.34); ST('#586068', 0.07);
+  ctx.beginPath(); ctx.moveTo(-0.5, 0.3); ctx.lineTo(-0.05, -0.1); ctx.lineTo(0.5, 0.3); ctx.lineTo(0.3, -0.25); ctx.lineTo(-0.05, -0.1); ST('#C75450', 0.07);
+  ctx.beginPath(); ctx.moveTo(0.05, -0.1); ctx.lineTo(0, -0.55); ST('#3A4250', 0.14);
+  C(0, -0.7, 0.15); F('#E8C9A0');
+  ctx.restore();
+}
+function dCar(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  ctx.beginPath();
+  ctx.moveTo(-1, 0.25); ctx.lineTo(-0.95, -0.1); ctx.lineTo(-0.45, -0.2); ctx.lineTo(-0.2, -0.5); ctx.lineTo(0.5, -0.5); ctx.lineTo(0.75, -0.15); ctx.lineTo(1, -0.05); ctx.lineTo(1, 0.25); ctx.closePath();
+  F(e.col || '#B85450'); ST('rgba(0,0,0,0.3)', 0.04);
+  ctx.beginPath(); ctx.moveTo(-0.15, -0.45); ctx.lineTo(0.45, -0.45); ctx.lineTo(0.6, -0.18); ctx.lineTo(-0.3, -0.18); ctx.closePath(); F('#BCE8F0');
+  C(-0.55, 0.3, 0.2); F('#22262A'); C(0.55, 0.3, 0.2); F('#22262A');
+  ctx.restore();
+}
+function dTruck(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  ctx.fillStyle = '#D8D4C8'; ctx.fillRect(-1, -0.55, 1.4, 0.85);
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 0.04; ctx.strokeRect(-1, -0.55, 1.4, 0.85);
+  ctx.fillStyle = '#5878A0'; ctx.fillRect(0.45, -0.35, 0.55, 0.65);
+  ctx.fillStyle = '#BCE8F0'; ctx.fillRect(0.75, -0.28, 0.2, 0.3);
+  for (const x of [-0.7, -0.2, 0.6]) { C(x, 0.38, 0.18); F('#22262A'); }
+  ctx.restore();
+}
+function dTree(e, t) {
+  ctx.fillStyle = '#6E5038'; ctx.fillRect(-0.1, 0.2, 0.2, 0.6);
+  C(0, -0.2, 0.65); F('#4A7440');
+  C(-0.4, 0.05, 0.4); F('#55854A'); C(0.4, 0.02, 0.42); F('#417038');
+  C(-0.15, -0.45, 0.3); F('#5A8C50');
+}
+function dHouse(e, t) {
+  ctx.fillStyle = '#C8B49C'; ctx.fillRect(-0.7, -0.2, 1.4, 0.85);
+  ctx.beginPath(); ctx.moveTo(-0.85, -0.2); ctx.lineTo(0, -0.85); ctx.lineTo(0.85, -0.2); ctx.closePath(); F('#8A5844');
+  ctx.fillStyle = '#68A0B8'; ctx.fillRect(-0.42, 0.05, 0.3, 0.3);
+  ctx.fillStyle = '#6E5038'; ctx.fillRect(0.15, 0.05, 0.3, 0.6);
+}
+function dBuilding(e, t) {
+  ctx.fillStyle = e.col || '#8A9AA8'; ctx.fillRect(-0.55, -1, 1.1, 2);
+  ctx.fillStyle = 'rgba(255,238,170,0.75)';
+  for (let y = 0; y < 6; y++) for (let x = 0; x < 3; x++) {
+    if ((e.ph * 37 + y * 3 + x) % 5 < 3) ctx.fillRect(-0.4 + x * 0.32, -0.85 + y * 0.32, 0.18, 0.2);
+  }
+}
+function dSkyscraper(e, t) {
+  ctx.fillStyle = '#6E8496'; ctx.fillRect(-0.4, -1.1, 0.8, 2.2);
+  ctx.fillStyle = '#8AA2B4'; ctx.fillRect(-0.25, -1.35, 0.5, 0.3);
+  ctx.beginPath(); ctx.moveTo(0, -1.35); ctx.lineTo(0, -1.7); ST('#AABCC8', 0.05);
+  ctx.fillStyle = 'rgba(188,232,240,0.5)';
+  for (let y = 0; y < 9; y++) ctx.fillRect(-0.3, -1 + y * 0.23, 0.6, 0.12);
+}
+function dStadium(e, t) {
+  EL(0, 0, 1, 0.7); F('#8A96A0'); EL(0, 0, 0.72, 0.46); F('#4A8448');
+  EL(0, 0, 0.72, 0.46); ST('#E8E2D0', 0.04);
+  ctx.beginPath(); ctx.moveTo(0, -0.46); ctx.lineTo(0, 0.46); ST('#E8E2D0', 0.03);
+}
+function dBlock(e, t) {
+  for (let i = 0; i < 6; i++) {
+    const x = (i % 3 - 1) * 0.6, y = (Math.floor(i / 3) - 0.5) * 0.62;
+    ctx.fillStyle = ['#9A8A78', '#8A9AA8', '#A89684'][i % 3];
+    ctx.fillRect(x - 0.26, y - 0.26, 0.52, 0.52);
+    ctx.fillStyle = '#6E5844'; ctx.fillRect(x - 0.26, y - 0.26, 0.52, 0.14);
+  }
+}
+// —— 地理 ——
+function dMountain(e, t) {
+  ctx.beginPath(); ctx.moveTo(-1, 0.8); ctx.lineTo(-0.2, -0.9); ctx.lineTo(0.5, 0.1); ctx.lineTo(1, 0.8); ctx.closePath(); F('#5E5A52');
+  ctx.beginPath(); ctx.moveTo(-0.2, -0.9); ctx.lineTo(0.05, -0.35); ctx.lineTo(-0.1, -0.3); ctx.lineTo(-0.35, -0.55); ctx.closePath(); F('#E8ECF0');
+  ctx.beginPath(); ctx.moveTo(0.2, 0.8); ctx.lineTo(0.65, -0.35); ctx.lineTo(1, 0.8); ctx.closePath(); F('#4E4A44');
+}
+function dLake(e, t) {
+  ctx.beginPath();
+  for (let i = 0; i <= 10; i++) {
+    const a = i / 10 * TAU;
+    const r = 0.85 + Math.sin(a * 3 + e.ph) * 0.15;
+    const x = Math.cos(a) * r, y = Math.sin(a) * r * 0.8;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.closePath(); F('#4A7CA0'); ST('#C8B896', 0.06);
+  EL(-0.2, -0.15, 0.4, 0.15, 0.3); F('rgba(255,255,255,0.2)');
+}
+function dCity(e, t) {
+  C(0, 0, 1); F('rgba(160,150,130,0.5)');
+  ctx.fillStyle = '#B0A890';
+  for (let i = 0; i < 14; i++) {
+    const a = e.ph + i * 2.4, r = (i % 5) * 0.18;
+    ctx.fillRect(Math.cos(a) * r - 0.07, Math.sin(a) * r - 0.07, 0.14, 0.14);
+  }
+  ctx.strokeStyle = 'rgba(90,84,70,0.7)'; ctx.lineWidth = 0.04;
+  ctx.beginPath(); ctx.moveTo(-1, 0); ctx.lineTo(1, 0); ctx.moveTo(0, -1); ctx.lineTo(0, 1); ctx.stroke();
+}
+function dCloud(e, t) {
+  ctx.globalAlpha = 0.85;
+  C(0, 0, 0.6); F('#E8ECF0'); C(-0.55, 0.12, 0.42); F('#E8ECF0');
+  C(0.55, 0.1, 0.45); F('#DCE4EA'); C(0.15, -0.28, 0.4); F('#F2F6F8');
+  ctx.globalAlpha = 1;
+}
+function dIsland(e, t) {
+  ctx.beginPath();
+  for (let i = 0; i <= 12; i++) {
+    const a = i / 12 * TAU;
+    const r = 0.8 + Math.sin(a * 4 + e.ph) * 0.2;
+    i ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  ctx.closePath(); F('#C8B896');
+  ctx.save(); ctx.scale(0.82, 0.82); ctx.beginPath();
+  for (let i = 0; i <= 12; i++) {
+    const a = i / 12 * TAU;
+    const r = 0.8 + Math.sin(a * 4 + e.ph) * 0.2;
+    i ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  ctx.closePath(); F('#5A8C50'); ctx.restore();
+  C(0.1, 0.05, 0.18); F('#4E4A44');
+}
+function dRange(e, t) {
+  for (let i = 0; i < 4; i++) {
+    const x = -0.75 + i * 0.5;
+    ctx.beginPath(); ctx.moveTo(x - 0.45, 0.5); ctx.lineTo(x, -0.5 - (i % 2) * 0.3); ctx.lineTo(x + 0.45, 0.5); ctx.closePath();
+    F(i % 2 ? '#5E5A52' : '#6E6A60');
+    ctx.beginPath(); ctx.moveTo(x, -0.5 - (i % 2) * 0.3); ctx.lineTo(x + 0.12, -0.25 - (i % 2) * 0.3); ctx.lineTo(x - 0.12, -0.25 - (i % 2) * 0.3); ctx.closePath(); F('#E8ECF0');
+  }
+}
+function dContinent(e, t) {
+  ctx.beginPath();
+  for (let i = 0; i <= 16; i++) {
+    const a = i / 16 * TAU;
+    const r = 0.75 + Math.sin(a * 5 + e.ph) * 0.22 + Math.sin(a * 2 + e.ph * 2) * 0.1;
+    i ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  ctx.closePath(); F('#7A9458'); ST('#C8B896', 0.05);
+  C(-0.2, -0.1, 0.25); F('#5E5A52');
+  C(0.3, 0.25, 0.16); F('#4A7CA0');
+}
+// —— 天体 ——
+function dMoon(e, t) {
+  C(0, 0, 1); F('#B8B4AC');
+  C(-0.3, -0.2, 0.22); F('#9A968E'); C(0.25, 0.3, 0.15); F('#9A968E'); C(0.3, -0.35, 0.1); F('#A8A49C');
+  C(-0.3, -0.35, 0.5); F('rgba(255,255,255,0.08)');
+}
+function dMars(e, t) {
+  C(0, 0, 1); F('#C07850');
+  EL(0, -0.85, 0.4, 0.14); F('#E8E4DC');
+  C(0.25, 0.15, 0.2); F('#A86040'); C(-0.3, 0.3, 0.14); F('#A86040');
+}
+function dEarth(e, t) {
+  C(0, 0, 1); F('#4A7CA0');
+  ctx.save(); ctx.beginPath(); ctx.arc(0, 0, 1, 0, TAU); ctx.clip();
+  C(-0.35, -0.25, 0.42); F('#5A8C50'); C(0.45, 0.2, 0.35); F('#5A8C50');
+  C(0.1, 0.55, 0.22); F('#C8B896');
+  EL(-0.1, 0.15, 0.7, 0.16, 0.5); F('rgba(255,255,255,0.4)');
+  EL(0.3, -0.5, 0.5, 0.12, -0.3); F('rgba(255,255,255,0.35)');
+  ctx.restore();
+  // 高光
+  ctx.globalAlpha = 0.12; C(-0.3, -0.3, 0.9); F('#FFFFFF'); ctx.globalAlpha = 1;
+}
+function dGasGiant(e, t) {
+  C(0, 0, 1); F('#C8A878');
+  ctx.save(); ctx.beginPath(); ctx.arc(0, 0, 1, 0, TAU); ctx.clip();
+  for (let i = 0; i < 5; i++) {
+    ctx.fillStyle = i % 2 ? '#B89060' : '#D8BC90';
+    ctx.fillRect(-1, -0.9 + i * 0.38, 2, 0.2);
+  }
+  C(0.3, 0.25, 0.18); F('#A87850');
+  ctx.restore();
+  if (e.ph % 2 > 1) { // 一半带环 → 土星
+    ctx.save(); ctx.rotate(-0.4);
+    EL(0, 0, 1.7, 0.4); ST('#D8C8A8', 0.1);
+    EL(0, 0, 1.45, 0.32); ST('rgba(216,200,168,0.5)', 0.06);
+    ctx.restore();
+  }
+}
+function dComet(e, t) {
+  const a = Math.atan2(e.vy, e.vx);
+  ctx.save(); ctx.rotate(a);
+  const g = ctx.createLinearGradient(0, 0, -3.4, 0);
+  g.addColorStop(0, 'rgba(188,232,240,0.8)'); g.addColorStop(1, 'rgba(188,232,240,0)');
+  ctx.beginPath(); ctx.moveTo(0, -0.3); ctx.lineTo(-3.4, 0); ctx.lineTo(0, 0.3); ctx.closePath();
+  ctx.fillStyle = g; ctx.fill();
+  C(0, 0, 0.42); F('#DCE8EC');
+  ctx.restore();
+}
+function dStar(e, t, col1, col2) {
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1.6);
+  g.addColorStop(0, col1); g.addColorStop(0.45, col2); g.addColorStop(1, 'rgba(0,0,0,0)');
+  C(0, 0, 1.6); ctx.fillStyle = g; ctx.fill();
+  C(0, 0, 0.7 + Math.sin(t * 3 + e.ph) * 0.04); F(col1);
+}
+function dSolarSystem(e, t) {
+  for (let i = 1; i <= 4; i++) {
+    C(0, 0, i * 0.24); ST('rgba(200,210,220,0.25)', 0.02);
+    const a = t * (0.5 / i) + e.ph * i;
+    C(Math.cos(a) * i * 0.24, Math.sin(a) * i * 0.24, 0.045 + i * 0.012);
+    F(['#B8B4AC', '#4A7CA0', '#C07850', '#C8A878'][i - 1]);
+  }
+  dStar(e, t, '#FFF6DC', '#FFD890');
+}
+function dNebula(e, t) {
+  ctx.globalAlpha = 0.5;
+  for (let i = 0; i < 6; i++) {
+    const a = e.ph + i * 1.9;
+    C(Math.cos(a) * 0.5, Math.sin(a) * 0.45, 0.55);
+    F(['rgba(200,160,255,0.5)', 'rgba(127,224,180,0.4)', 'rgba(255,160,180,0.4)'][i % 3]);
+  }
+  ctx.globalAlpha = 1;
+  for (let i = 0; i < 8; i++) {
+    const a = e.ph * 3 + i * 2.3;
+    C(Math.cos(a) * rand(0, 0.001) + Math.cos(a) * 0.6, Math.sin(a) * 0.55, 0.03); F('#FFFFFF');
+  }
+}
+function dCluster(e, t) {
+  for (let i = 0; i < 16; i++) {
+    const a = e.ph + i * 2.4, r = ((i * 7) % 10) / 10;
+    C(Math.cos(a) * r, Math.sin(a) * r * 0.9, 0.05 + (i % 3) * 0.02);
+    F(i % 4 ? '#E8ECF4' : '#BCE8F0');
+  }
+  C(0, 0, 1); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  g.addColorStop(0, 'rgba(230,235,245,0.25)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fill();
+}
+function dGalaxy(e, t) {
+  ctx.save(); ctx.rotate(t * 0.12 + e.ph);
+  for (let arm = 0; arm < 2; arm++) {
+    for (let i = 0; i < 26; i++) {
+      const tt = i / 26;
+      const a = arm * Math.PI + tt * 4.2;
+      const r = 0.15 + tt * 0.85;
+      ctx.globalAlpha = (1 - tt) * 0.8 + 0.2;
+      C(Math.cos(a) * r, Math.sin(a) * r * 0.85, 0.05 + (1 - tt) * 0.04);
+      F(i % 5 ? '#D8DCF0' : '#C8A0FF');
+    }
+  }
+  ctx.globalAlpha = 1;
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 0.45);
+  g.addColorStop(0, '#FFF2D8'); g.addColorStop(1, 'rgba(255,242,216,0)');
+  C(0, 0, 0.45); ctx.fillStyle = g; ctx.fill();
+  ctx.restore();
+}
+function dDwarfGalaxy(e, t) {
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  g.addColorStop(0, 'rgba(216,220,240,0.8)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  C(0, 0, 1); ctx.fillStyle = g; ctx.fill();
+  for (let i = 0; i < 10; i++) { const a = e.ph + i * 2.1; C(Math.cos(a) * ((i % 4) / 5), Math.sin(a) * ((i % 3) / 4), 0.04); F('#E8ECF4'); }
+}
+function dGalaxyCluster(e, t) {
+  for (let i = 0; i < 7; i++) {
+    const a = e.ph + i * 2.7, r = ((i * 5) % 9) / 10;
+    ctx.save(); ctx.translate(Math.cos(a) * r, Math.sin(a) * r * 0.9); ctx.scale(0.22, 0.22); ctx.rotate(a);
+    i % 2 ? dGalaxy(e, t) : dDwarfGalaxy(e, t);
+    ctx.restore();
+  }
+}
+function dWebNode(e, t) {
+  ctx.strokeStyle = 'rgba(200,160,255,0.35)';
+  ctx.lineWidth = 0.05;
+  for (let i = 0; i < 5; i++) {
+    const a = e.ph + i * 1.26;
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(Math.cos(a + 0.4) * 0.7, Math.sin(a + 0.4) * 0.7, Math.cos(a) * 1.4, Math.sin(a) * 1.4);
+    ctx.stroke();
+  }
+  for (let i = 0; i < 8; i++) { const a = e.ph * 2 + i * 2.2; C(Math.cos(a) * ((i % 5) / 5), Math.sin(a) * ((i % 4) / 4), 0.06); F('rgba(235,220,255,0.9)'); }
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 0.5);
+  g.addColorStop(0, 'rgba(255,240,255,0.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  C(0, 0, 0.5); ctx.fillStyle = g; ctx.fill();
+}
+function dUniverse(e, t) {
+  // 可观测宇宙：一枚装着星网的泡
+  const g = ctx.createRadialGradient(0, 0, 0.6, 0, 0, 1.05);
+  g.addColorStop(0, 'rgba(30,16,50,0.9)'); g.addColorStop(1, 'rgba(140,110,200,0.9)');
+  C(0, 0, 1); ctx.fillStyle = g; ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.arc(0, 0, 0.98, 0, TAU); ctx.clip();
+  ctx.strokeStyle = 'rgba(200,160,255,0.3)'; ctx.lineWidth = 0.02;
+  for (let i = 0; i < 7; i++) {
+    const a = e.ph + i * 0.9;
+    ctx.beginPath(); ctx.moveTo(Math.cos(a) * -1, Math.sin(a) * -1);
+    ctx.quadraticCurveTo(Math.cos(a + 2) * 0.5, Math.sin(a + 2) * 0.5, Math.cos(a + 0.7), Math.sin(a + 0.7));
+    ctx.stroke();
+  }
+  for (let i = 0; i < 30; i++) {
+    const a = e.ph * 3 + i * 2.3, r = ((i * 13) % 17) / 17;
+    C(Math.cos(a) * r, Math.sin(a) * r, 0.025); F(i % 4 ? '#E8E0FF' : '#FFE9BC');
+  }
+  ctx.restore();
+  C(0, 0, 1); ST('rgba(230,210,255,0.9)', 0.04);
+  C(-0.35, -0.35, 0.5); F('rgba(255,255,255,0.1)');
+}
+function dCrumb(e, t) {
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  g.addColorStop(0, '#FFF2CE'); g.addColorStop(0.5, 'rgba(255,216,144,0.6)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  C(0, 0, 1); ctx.fillStyle = g; ctx.fill();
+}
+function dTurtle(e, t) {
+  ctx.save();
+  const sw = Math.sin(t * 0.8);
+  // 四鳍
+  for (const [sx, sy] of [[-1, -0.5], [1, -0.5], [-1, 0.6], [1, 0.6]]) {
+    ctx.save(); ctx.translate(sx * 0.82, sy * 0.7); ctx.rotate(sx * (0.5 + sw * 0.18));
+    EL(0, 0, 0.42, 0.2); F('#4E6E50');
+    ctx.restore();
+  }
+  // 头
+  EL(0, -1.02, 0.28, 0.34); F('#5A7C5C');
+  C(-0.1, -1.1, 0.045); F('#101810'); C(0.1, -1.1, 0.045); F('#101810');
+  // 壳
+  C(0, 0, 0.92); F('#6E8A5A'); ST('#4E6E50', 0.06);
+  C(0, 0, 0.66); ST('rgba(40,60,42,0.5)', 0.04);
+  for (let i = 0; i < 6; i++) {
+    const a = i / 6 * TAU + 0.5;
+    ctx.beginPath(); ctx.moveTo(Math.cos(a) * 0.3, Math.sin(a) * 0.3);
+    ctx.lineTo(Math.cos(a) * 0.9, Math.sin(a) * 0.9); ST('rgba(40,60,42,0.5)', 0.04);
+  }
+  C(0, 0, 0.3); ST('rgba(40,60,42,0.55)', 0.04);
+  // 壳上四象：站着四头小象，托着一圈已然空了的光环
+  for (let i = 0; i < 4; i++) {
+    const x = -0.45 + i * 0.3;
+    ctx.save(); ctx.translate(x, -0.15); ctx.scale(0.13, 0.13);
+    EL(0, 0, 1, 0.8); F('#9A9AA6');
+    C(0.75, -0.5, 0.5); F('#9A9AA6');
+    ctx.beginPath(); ctx.moveTo(1.1, -0.3); ctx.quadraticCurveTo(1.5, 0.3, 1.2, 0.8); ST('#8A8A96', 0.3);
+    ctx.fillStyle = '#8A8A96'; ctx.fillRect(-0.7, 0.5, 0.35, 0.6); ctx.fillRect(0.2, 0.5, 0.35, 0.6);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 0.25 + Math.sin(t * 1.4) * 0.1;
+  EL(0, -0.5, 0.75, 0.3); ST('#FFE9BC', 0.05);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+// ———— 图鉴表 ————
+// rm: 典型半径(米)  gate: 玩家 S 范围  w: 权重
+// mv: drift/walk/static/float  flee/chase: 行为开关
+const TYPES = [
+  { n: '氢原子', rm: 6e-11, g: [-10.7, -8.8], w: 3, mv: 'drift', d: (e, t) => dAtom(e, t, '#C75450', '#9FD8BC') },
+  { n: '氦原子', rm: 9e-11, g: [-10.7, -8.6], w: 2, mv: 'drift', d: (e, t) => dAtom(e, t, '#C8A0FF', '#BCE8F0') },
+  { n: '水分子', rm: 1.6e-10, g: [-10.4, -8.4], w: 2.5, mv: 'drift', d: dMolecule },
+  { n: '糖分子', rm: 5e-10, g: [-10, -8], w: 2, mv: 'drift', d: dSugar },
+  { n: '蛋白质', rm: 4e-9, g: [-9.6, -7.4], w: 2.5, mv: 'drift', d: dProtein },
+  { n: 'DNA 片段', rm: 1.4e-8, g: [-9, -7], w: 2, mv: 'drift', d: dDNA },
+  { n: '病毒', rm: 5e-8, g: [-8.6, -6.5], w: 3, mv: 'drift', d: dVirus },
+  { n: '噬菌体', rm: 1.1e-7, g: [-8.2, -6.1], w: 2, mv: 'drift', d: dPhage },
+  { n: '细菌', rm: 9e-7, g: [-7.6, -5.2], w: 3, mv: 'walk', flee: 1, d: dBacteria },
+  { n: '藻细胞', rm: 4e-6, g: [-7, -4.8], w: 2, mv: 'drift', d: dAlgae },
+  { n: '草履虫', rm: 9e-5, g: [-6, -3.8], w: 2.2, mv: 'walk', flee: 1, chase: 1, d: dParamecium },
+  { n: '花粉', rm: 2e-5, g: [-6.4, -4.2], w: 2, mv: 'drift', d: dPollen },
+  { n: '尘埃', rm: 6e-5, g: [-6, -3.6], w: 2.5, mv: 'drift', d: dDust },
+  { n: '尘螨', rm: 1.8e-4, g: [-5.2, -3], w: 2, mv: 'walk', chase: 1, d: dMite },
+  { n: '沙粒', rm: 4.5e-4, g: [-4.6, -2.6], w: 2, mv: 'static', d: dSand },
+  { n: '蚜虫', rm: 9e-4, g: [-4, -2.2], w: 2, mv: 'walk', flee: 1, d: dAphid },
+  { n: '蚂蚁', rm: 2.6e-3, g: [-3.6, -1.6], w: 3, mv: 'walk', flee: 1, chase: 1, d: dAnt },
+  { n: '甲虫', rm: 7e-3, g: [-3, -1.2], w: 2.2, mv: 'walk', flee: 1, d: dBeetle },
+  { n: '蜘蛛', rm: 1e-2, g: [-3, -1], w: 1.6, mv: 'walk', chase: 1, d: dSpider },
+  { n: '蟑螂', rm: 1.7e-2, g: [-2.6, -0.8], w: 2, mv: 'walk', flee: 1, d: dRoach },
+  { n: '青蛙', rm: 4.5e-2, g: [-2.2, -0.4], w: 1.8, mv: 'walk', flee: 1, chase: 1, d: dFrog },
+  { n: '老鼠', rm: 5.5e-2, g: [-2, -0.3], w: 2.2, mv: 'walk', flee: 1, chase: 1, d: dMouse },
+  { n: '麻雀', rm: 9e-2, g: [-1.8, -0.1], w: 1.8, mv: 'walk', flee: 1, d: dSparrow },
+  { n: '猫', rm: 0.26, g: [-1.2, 0.7], w: 1.8, mv: 'walk', flee: 1, chase: 1, d: dCat },
+  { n: '狗', rm: 0.42, g: [-1, 0.9], w: 1.8, mv: 'walk', flee: 1, chase: 1, d: dDog },
+  { n: '人', rm: 0.9, g: [-0.6, 1.7], w: 3, mv: 'walk', flee: 1, d: dHuman, vary: 1 },
+  { n: '自行车骑手', rm: 1.1, g: [-0.3, 1.7], w: 1.4, mv: 'walk', flee: 1, d: dBike },
+  { n: '汽车', rm: 2.4, g: [0, 2.1], w: 2.6, mv: 'walk', flee: 1, d: dCar, vary: 1 },
+  { n: '卡车', rm: 4.6, g: [0.3, 2.4], w: 1.6, mv: 'walk', flee: 1, d: dTruck },
+  { n: '树', rm: 4, g: [0, 2.7], w: 2.4, mv: 'static', d: dTree },
+  { n: '民房', rm: 7, g: [0.5, 2.8], w: 2.2, mv: 'static', d: dHouse },
+  { n: '大楼', rm: 32, g: [1.2, 3.4], w: 2.4, mv: 'static', d: dBuilding, vary: 1 },
+  { n: '摩天大楼', rm: 130, g: [1.8, 4], w: 2, mv: 'static', d: dSkyscraper },
+  { n: '体育场', rm: 260, g: [2.2, 4.2], w: 1.4, mv: 'static', d: dStadium },
+  { n: '街区', rm: 520, g: [2.5, 4.6], w: 2.2, mv: 'static', d: dBlock },
+  { n: '山峰', rm: 2600, g: [3, 5.6], w: 2.2, mv: 'static', d: dMountain },
+  { n: '湖泊', rm: 4600, g: [3.2, 5.6], w: 1.8, mv: 'static', d: dLake },
+  { n: '城市', rm: 9500, g: [3.6, 6], w: 2, mv: 'static', d: dCity },
+  { n: '积云', rm: 9000, g: [3.4, 6.2], w: 1.8, mv: 'float', d: dCloud },
+  { n: '岛屿', rm: 5.2e4, g: [4.4, 6.5], w: 2, mv: 'static', d: dIsland },
+  { n: '山脉', rm: 3.2e5, g: [5, 6.8], w: 1.8, mv: 'static', d: dRange },
+  { n: '大陆', rm: 2.6e6, g: [5.8, 7.4], w: 1.8, mv: 'static', d: dContinent },
+  { n: '月球', rm: 1.7e6, g: [6, 8.1], w: 2, mv: 'drift', d: dMoon },
+  { n: '彗星', rm: 5e5, g: [6.2, 8.6], w: 1.4, mv: 'drift', fast: 1, d: dComet },
+  { n: '火星', rm: 3.4e6, g: [6.3, 8.3], w: 1.6, mv: 'drift', d: dMars },
+  { n: '地球', rm: 6.4e6, g: [6.4, 8.5], w: 1.6, mv: 'drift', d: dEarth },
+  { n: '气态巨行星', rm: 6.5e7, g: [6.8, 9.2], w: 2, mv: 'drift', d: dGasGiant },
+  { n: '恒星', rm: 7e8, g: [7.6, 10.2], w: 2.6, mv: 'drift', d: (e, t) => dStar(e, t, '#FFF6DC', '#FFD890') },
+  { n: '蓝巨星', rm: 7e9, g: [8.3, 11], w: 1.8, mv: 'drift', d: (e, t) => dStar(e, t, '#E8F4FF', '#9CC8F0') },
+  { n: '红巨星', rm: 2e11, g: [9.2, 12.4], w: 1.8, mv: 'drift', d: (e, t) => dStar(e, t, '#FFE0C8', '#E07850') },
+  { n: '恒星系', rm: 4.5e12, g: [10.5, 14], w: 2.4, mv: 'drift', d: dSolarSystem },
+  { n: '星云', rm: 5e15, g: [12.8, 17.4], w: 2.4, mv: 'float', d: dNebula },
+  { n: '球状星团', rm: 2e17, g: [14.4, 19], w: 2, mv: 'drift', d: dCluster },
+  { n: '矮星系', rm: 8e19, g: [17, 21.6], w: 2.2, mv: 'drift', d: dDwarfGalaxy },
+  { n: '旋涡星系', rm: 5e20, g: [18, 22.8], w: 2.4, mv: 'drift', d: dGalaxy },
+  { n: '星系团', rm: 5e23, g: [21, 25.4], w: 2.2, mv: 'drift', d: dGalaxyCluster },
+  { n: '宇宙之网', rm: 3e24, g: [22.6, 26.4], w: 2, mv: 'static', d: dWebNode },
+  { n: '可观测宇宙', rm: 4.4e26, g: [25.2, 27.6], w: 3, mv: 'drift', d: dUniverse, unique: 1 },
+  // 结局实体（不进常规刷怪）
+  { n: '星屑', rm: 0, g: [99, 99], w: 0, mv: 'drift', d: dCrumb, crumb: 1 },
+  { n: '世界龟阿图因', rm: 0, g: [99, 99], w: 0, mv: 'drift', d: dTurtle, turtle: 1 },
+];
+
+// ============================================================
+// 游戏状态
+// ============================================================
+const game = {
+  mode: 'intro', // intro | play | void | end
+  pr: 30,             // 玩家本地半径
+  unitScale: 1e-10 / 30, // 米/本地单位（起始半径 = 1e-10 m 氢原子级）
+  px: 0, py: 0, vx: 0, vy: 0,
+  zoom: 1,
+  ents: [],
+  parts: [],          // 粒子
+  time: 0,
+  eats: 0,
+  eaten: {},          // 名称 → 次数（首吞提示）
+  hurtT: 0, flashT: 0,
+  stage: '',
+  startAt: 0,
+  universeEaten: false,
+  turtle: null,
+  voidT: 0,
+  shake: 0,
+};
+const sizeM = () => game.pr * game.unitScale;
+const S = () => Math.log10(sizeM());
+const viewR = () => Math.max(W, H) / 2 / game.zoom;
+
+// 输入
+let mx = W / 2, my = H / 2, pointerOn = false;
+addEventListener('pointermove', (e) => { mx = e.clientX; my = e.clientY; });
+addEventListener('pointerdown', (e) => { pointerOn = true; mx = e.clientX; my = e.clientY; });
+addEventListener('pointerup', () => { pointerOn = false; });
+
+// ———— 刷生态 ————
+function spawnOne(d0 = 1.05, d1 = 2.0) {
+  const s = S();
+  const desiredRel = Math.random() < 0.68 ? rand(0.18, 0.82) : rand(1.1, 2.4);
+  const cands = [];
+  for (const T of TYPES) {
+    if (T.crumb || T.turtle) continue;
+    if (s < T.g[0] || s > T.g[1]) continue;
+    if (T.unique && (game.universeEaten || game.ents.some((e) => e.T.unique))) continue;
+    const rel = T.rm / sizeM();
+    if (rel < 0.07 || rel > 3.2) continue;
+    // 权重按与期望相对大小的接近程度衰减
+    const dist = Math.abs(Math.log(rel / desiredRel));
+    cands.push([T, T.w / (1 + dist * 2), rel]);
+  }
+  if (!cands.length) return;
+  let sum = 0;
+  for (const c of cands) sum += c[1];
+  let roll = Math.random() * sum;
+  let chosen = cands[0];
+  for (const c of cands) { roll -= c[1]; if (roll <= 0) { chosen = c; break; } }
+  const [T, , rel] = chosen;
+  const a = rand(TAU);
+  const d = viewR() * rand(d0, d1);
+  const r = game.pr * rel * rand(0.75, 1.3);
+  game.ents.push({
+    T, r,
+    x: game.px + Math.cos(a) * d,
+    y: game.py + Math.sin(a) * d,
+    vx: 0, vy: 0,
+    ph: rand(TAU),
+    dir: rand(TAU),
+    col: T.vary ? `hsl(${rand(0, 360) | 0},${rand(30, 55) | 0}%,${rand(40, 62) | 0}%)` : null,
+  });
+}
+
+// ———— 粒子 ————
+function popParts(x, y, r, n, col) {
+  for (let i = 0; i < n; i++) {
+    if (game.parts.length > 200) game.parts.shift();
+    const a = rand(TAU);
+    game.parts.push({
+      x: x + Math.cos(a) * r * 0.4, y: y + Math.sin(a) * r * 0.4,
+      vx: Math.cos(a) * r * rand(1, 3), vy: Math.sin(a) * r * rand(1, 3),
+      r: r * rand(0.1, 0.24), life: rand(0.3, 0.6), t: 0, col, suck: true,
+    });
+  }
+}
+
+// ———— 提示 ————
+const toastEl = document.getElementById('toast');
+function toast(txt) {
+  const d = document.createElement('div');
+  d.className = 'toastItem';
+  d.textContent = txt;
+  toastEl.appendChild(d);
+  while (toastEl.children.length > 3) toastEl.firstChild.remove();
+  setTimeout(() => d.remove(), 2100);
+}
+const bannerEl = document.getElementById('stageBanner');
+let bannerTimer = 0;
+function showStage(name) {
+  bannerEl.textContent = name;
+  bannerEl.classList.add('on');
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => bannerEl.classList.remove('on'), 2200);
+  sndStage();
+}
+
+// ———— 吞吃与受击 ————
+function eat(e, i) {
+  const rel = e.r / game.pr;
+  game.pr = Math.sqrt(game.pr * game.pr + 0.95 * e.r * e.r);
+  game.eats++;
+  if (!game.eaten[e.T.n]) {
+    game.eaten[e.T.n] = 0;
+    toast('首次吞噬 · ' + e.T.n);
+  }
+  game.eaten[e.T.n]++;
+  popParts(e.x, e.y, e.r, Math.min(8, 3 + e.r / game.pr * 8), e.T.turtle ? '#FFE9BC' : '#EAF2EE');
+  sndPop(rel);
+  if (rel > 0.6) game.shake = Math.min(8, game.shake + 3);
+  game.ents.splice(i, 1);
+  if (e.T.unique) onUniverseEaten();
+  if (e.T.turtle) onTurtleEaten();
+  // 重缩放：视觉无缝（zoom 与 pr 同除，画面不变）
+  if (game.pr > 140) {
+    const f = game.pr / 34;
+    game.unitScale *= f;
+    game.pr /= f;
+    game.zoom *= f;
+    for (const en of game.ents) { en.x /= f; en.y /= f; en.r /= f; en.vx /= f; en.vy /= f; }
+    for (const p of game.parts) { p.x /= f; p.y /= f; p.r /= f; p.vx /= f; p.vy /= f; }
+    game.px /= f; game.py /= f; game.vx /= f; game.vy /= f;
+  }
+}
+function hurt(e) {
+  if (game.hurtT > 0) return;
+  game.hurtT = 0.9;
+  game.flashT = 1;
+  game.pr *= 0.97; // 撞掉一点质量
+  const dx = game.px - e.x, dy = game.py - e.y;
+  const l = Math.hypot(dx, dy) || 1;
+  game.vx += (dx / l) * game.pr * 9;
+  game.vy += (dy / l) * game.pr * 9;
+  game.shake = 7;
+  sndHurt();
+}
+
+// ———— 结局流程 ————
+function onUniverseEaten() {
+  game.universeEaten = true;
+  game.mode = 'void';
+  game.voidT = 0;
+  game.ents.length = 0;
+  showStage('虚 空');
+  setTimeout(() => toast('万物已尽。但黑暗中，有什么在游动……'), 2400);
+}
+function spawnCrumb() {
+  const a = rand(TAU), d = viewR() * rand(1.2, 2);
+  const T = TYPES.find((t) => t.crumb);
+  game.ents.push({
+    T, r: game.pr * rand(0.25, 0.55),
+    x: game.px + Math.cos(a) * d, y: game.py + Math.sin(a) * d,
+    vx: 0, vy: 0, ph: rand(TAU), dir: rand(TAU), col: null,
+  });
+}
+function spawnTurtle() {
+  const T = TYPES.find((t) => t.turtle);
+  const a = rand(TAU);
+  game.turtle = {
+    T, r: game.pr * 2.6,
+    x: game.px + Math.cos(a) * viewR() * 2.2,
+    y: game.py + Math.sin(a) * viewR() * 2.2,
+    vx: 0, vy: 0, ph: 0, dir: rand(TAU), col: null,
+  };
+  game.ents.push(game.turtle);
+  toast('世界龟 · 阿图因');
+}
+function onTurtleEaten() {
+  game.mode = 'end';
+  game.flashT = 2;
+  sndEnd();
+  const secs = (performance.now() - game.startAt) / 1000;
+  const m = Math.floor(secs / 60), s2 = Math.floor(secs % 60);
+  document.getElementById('endStats').innerHTML =
+    `总吞噬 <b>${game.eats}</b> 口 · 图鉴收录 <b>${Object.keys(game.eaten).length - 2}</b> 种<br>` +
+    `从 <b>100 皮米</b> 到 <b>${fmtSize(sizeM())}</b> · 跨越 <b>${(S() + 10).toFixed(0)}</b> 个数量级<br>` +
+    `用时 <b>${m}分${s2}秒</b>`;
+  setTimeout(() => document.getElementById('ending').classList.remove('hidden'), 1400);
+}
+
+// ============================================================
+// 更新
+// ============================================================
+let lastStage = '';
+function update(dt) {
+  const g = game;
+  g.time += dt;
+  // 玩家追随指针
+  const wantX = g.px + (mx - W / 2) / g.zoom;
+  const wantY = g.py + (my - H / 2) / g.zoom;
+  const dx = wantX - g.px, dy = wantY - g.py;
+  const dl = Math.hypot(dx, dy);
+  const maxV = g.pr * 6.4;
+  if (dl > g.pr * 0.18) {
+    g.vx += (dx / dl) * maxV * dt * 5;
+    g.vy += (dy / dl) * maxV * dt * 5;
+  }
+  const vl = Math.hypot(g.vx, g.vy);
+  if (vl > maxV) { g.vx *= maxV / vl; g.vy *= maxV / vl; }
+  const damp = Math.exp(-3.2 * dt);
+  g.vx *= damp; g.vy *= damp;
+  g.px += g.vx * dt; g.py += g.vy * dt;
+  g.hurtT = Math.max(0, g.hurtT - dt);
+  g.flashT = Math.max(0, g.flashT - dt * 2);
+  g.shake *= Math.exp(-6 * dt);
+  // 缩放平滑
+  const targetZoom = 42 / g.pr;
+  g.zoom = lerp(g.zoom, targetZoom, 1 - Math.exp(-3 * dt));
+  // 原点回正
+  if (Math.abs(g.px) > 2200 || Math.abs(g.py) > 2200) {
+    const ox = g.px, oy = g.py;
+    for (const e of g.ents) { e.x -= ox; e.y -= oy; }
+    for (const p of g.parts) { p.x -= ox; p.y -= oy; }
+    g.px = 0; g.py = 0;
+  }
+
+  // 生态维持
+  if (g.mode === 'play') {
+    const target = 140;
+    for (let k = 0; k < 4 && g.ents.length < target; k++) spawnOne();
+  } else if (g.mode === 'void') {
+    g.voidT += dt;
+    if (g.voidT > 2.2 && !g.turtle) spawnTurtle();
+    const crumbs = g.ents.filter((e) => e.T.crumb).length;
+    if (crumbs < 8 && Math.random() < dt * 3) spawnCrumb();
+  }
+
+  // 实体更新
+  const vr = viewR();
+  for (let i = g.ents.length - 1; i >= 0; i--) {
+    const e = g.ents[i];
+    const rel = e.r / g.pr;
+    const ds = Math.hypot(e.x - g.px, e.y - g.py);
+    // 行为
+    const T = e.T;
+    let sp = 0, tx = 0, ty = 0;
+    if (T.turtle) {
+      // 神龟缓慢巡游，可被追上
+      e.dir += Math.sin(g.time * 0.3) * dt * 0.2;
+      sp = e.r * 0.18;
+      tx = Math.cos(e.dir); ty = Math.sin(e.dir);
+    } else if (T.mv === 'drift' || T.mv === 'float') {
+      e.dir += rand(-1.6, 1.6) * dt;
+      sp = e.r * (T.fast ? 1.6 : T.mv === 'float' ? 0.12 : 0.4);
+      tx = Math.cos(e.dir); ty = Math.sin(e.dir);
+    } else if (T.mv === 'walk') {
+      e.dir += rand(-2.4, 2.4) * dt;
+      sp = e.r * 1.1;
+      tx = Math.cos(e.dir); ty = Math.sin(e.dir);
+      if (T.flee && g.pr > e.r * 1.1 && ds < g.pr * 6.5) {
+        sp = e.r * 2.4;
+        tx = (e.x - g.px) / ds; ty = (e.y - g.py) / ds;
+      } else if (T.chase && e.r > g.pr * 1.15 && ds < e.r * 6) {
+        sp = e.r * 1.5;
+        tx = (g.px - e.x) / ds; ty = (g.py - e.y) / ds;
+      }
+    }
+    if (sp > 0) {
+      e.vx = lerp(e.vx, tx * sp, 1 - Math.exp(-3 * dt));
+      e.vy = lerp(e.vy, ty * sp, 1 - Math.exp(-3 * dt));
+      e.x += e.vx * dt; e.y += e.vy * dt;
+    }
+    // 吸附（略小的食物被轻微吸引）
+    if (rel < 0.85 && ds < g.pr * 1.9 && ds > 0.01) {
+      const pull = g.pr * 2.4 * (1 - ds / (g.pr * 1.9));
+      e.x += (g.px - e.x) / ds * pull * dt;
+      e.y += (g.py - e.y) / ds * pull * dt;
+    }
+    // 碰撞
+    if (ds < g.pr + e.r * 0.35) {
+      if (rel < 0.85) { eat(e, i); continue; }
+      else if (rel > 1.3 && !T.turtle) hurt(e);
+      else if (T.turtle && g.pr > e.r * 0.86) { eat(e, i); continue; }
+      else if (T.turtle) hurt(e);
+    }
+    // 剔除
+    if (!T.turtle && (ds > vr * 3.4 || rel < 0.04 || rel > 9)) g.ents.splice(i, 1);
+  }
+
+  // 粒子（被吸入口中）
+  for (let i = g.parts.length - 1; i >= 0; i--) {
+    const p = g.parts[i];
+    p.t += dt;
+    if (p.t >= p.life) { g.parts.splice(i, 1); continue; }
+    if (p.suck) {
+      const dx2 = g.px - p.x, dy2 = g.py - p.y;
+      const l = Math.hypot(dx2, dy2) || 1;
+      p.vx += (dx2 / l) * g.pr * 30 * dt;
+      p.vy += (dy2 / l) * g.pr * 30 * dt;
+    }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+  }
+
+  // 阶段横幅
+  if (g.mode === 'play') {
+    const st = stageAt(S());
+    if (st !== lastStage) { lastStage = st; showStage(st); }
+  }
+  // HUD
+  document.getElementById('sizeText').textContent = fmtSize(sizeM());
+  document.getElementById('stageText').textContent = g.mode === 'void' ? '虚空' : stageAt(S());
+  document.getElementById('eatText').textContent = '吞噬 ' + g.eats;
+  document.getElementById('progFill').style.width = clamp((S() + 10.3) / 37.5 * 100, 0, 100) + '%';
+}
+
+// ============================================================
+// 渲染
+// ============================================================
+// 视差尘点（固定网格哈希，无状态）
+function drawDots(bg) {
+  const g = game;
+  const layerCfg = [[0.35, 2.2], [0.65, 1.4]];
+  ctx.fillStyle = rgb(bg.dot, 0.5);
+  for (const [par, size] of layerCfg) {
+    const cell = 130;
+    const ox = g.px * par, oy = g.py * par;
+    const x0 = Math.floor((ox - W / 2 / g.zoom * 1.2) / cell) * cell;
+    const y0 = Math.floor((oy - H / 2 / g.zoom * 1.2) / cell) * cell;
+    const cols = Math.ceil(W / g.zoom * 1.2 / cell) + 2;
+    const rows = Math.ceil(H / g.zoom * 1.2 / cell) + 2;
+    if (cols * rows > 900) continue;
+    for (let iy = 0; iy < rows; iy++) {
+      for (let ix = 0; ix < cols; ix++) {
+        const cx = x0 + ix * cell, cy = y0 + iy * cell;
+        const h = ((cx * 73856093) ^ (cy * 19349663)) >>> 0;
+        if ((h % 100) / 100 > bg.den) continue;
+        const jx = cx + (h % 97), jy = cy + (h % 71);
+        const sx = (jx - ox) + g.px, sy = (jy - oy) + g.py;
+        ctx.beginPath();
+        ctx.arc(sx, sy, size / g.zoom * (0.6 + (h % 5) / 8), 0, TAU);
+        ctx.fill();
+      }
+    }
+  }
+}
+function drawPlayer(t) {
+  const g = game;
+  ctx.save();
+  ctx.translate(g.px, g.py);
+  const r = g.pr;
+  // 找最近的可吃目标 → 张嘴方向
+  let mouthA = Math.atan2(g.vy, g.vx), mouthW = 0;
+  let bd = Infinity;
+  for (const e of g.ents) {
+    if (e.r >= g.pr * 0.85 && !(e.T.turtle && g.pr > e.r * 0.86)) continue;
+    const d = Math.hypot(e.x - g.px, e.y - g.py);
+    if (d < bd) { bd = d; mouthA = Math.atan2(e.y - g.py, e.x - g.px); }
+  }
+  if (bd < r * 3.4) mouthW = clamp(1 - bd / (r * 3.4), 0, 1) * 0.9;
+  // 黏体轮廓（正弦扰动）
+  ctx.beginPath();
+  const N = 26;
+  for (let i = 0; i <= N; i++) {
+    const a = (i / N) * TAU;
+    let rr = r * (1 + Math.sin(a * 3 + t * 5) * 0.045 + Math.sin(a * 5 - t * 3.4) * 0.03);
+    // 张嘴：朝目标的一侧凹陷成嘴
+    let da = a - mouthA;
+    while (da > Math.PI) da -= TAU;
+    while (da < -Math.PI) da += TAU;
+    if (mouthW > 0 && Math.abs(da) < 0.9) {
+      rr *= 1 - mouthW * 0.42 * (1 - Math.abs(da) / 0.9);
+    }
+    const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.closePath();
+  const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r * 1.15);
+  grad.addColorStop(0, '#B8C4C0');
+  grad.addColorStop(0.65, '#8A9A96');
+  grad.addColorStop(1, '#6E7C7A');
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(230,240,236,0.75)';
+  ctx.lineWidth = r * 0.05;
+  ctx.stroke();
+  // 受击闪红
+  if (game.flashT > 0) {
+    ctx.globalAlpha = game.flashT * 0.5;
+    ctx.fillStyle = '#C75450';
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  // 眼睛（看向嘴的方向）
+  const ex = Math.cos(mouthA) * r * 0.34, ey = Math.sin(mouthA) * r * 0.34;
+  for (const s of [-1, 1]) {
+    const ox = Math.cos(mouthA + Math.PI / 2) * r * 0.3 * s;
+    const oy = Math.sin(mouthA + Math.PI / 2) * r * 0.3 * s;
+    C(ex * 0.5 + ox, ey * 0.5 + oy, r * 0.17); F('#F2F6F4');
+    C(ex * 0.62 + ox, ey * 0.62 + oy, r * 0.08); F('#22302C');
+  }
+  ctx.restore();
+}
+function render(t) {
+  const g = game;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const bg = bgAt(g.mode === 'void' || g.mode === 'end' ? 28.5 : S());
+  const grd = ctx.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, rgb(bg.top));
+  grd.addColorStop(1, rgb(bg.bot));
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+  // 世界变换
+  const shx = (Math.random() - 0.5) * g.shake, shy = (Math.random() - 0.5) * g.shake;
+  ctx.translate(W / 2 + shx, H / 2 + shy);
+  ctx.scale(g.zoom, g.zoom);
+  ctx.translate(-g.px, -g.py);
+  drawDots(bg);
+  // 实体：大的先画
+  const sorted = g.ents.slice().sort((a, b) => b.r - a.r);
+  const vr = viewR();
+  for (const e of sorted) {
+    if (Math.abs(e.x - g.px) > vr * 1.3 + e.r || Math.abs(e.y - g.py) > vr * 1.3 + e.r) continue;
+    ctx.save();
+    ctx.translate(e.x, e.y);
+    ctx.scale(e.r, e.r);
+    ctx.lineJoin = 'round';
+    e.T.d(e, t);
+    ctx.restore();
+  }
+  drawPlayer(t);
+  // 粒子
+  for (const p of g.parts) {
+    ctx.globalAlpha = 1 - p.t / p.life;
+    ctx.fillStyle = p.col;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // 暗角 + 受击边缘
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.42, W / 2, H / 2, Math.max(W, H) * 0.75);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,10,0.4)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, W, H);
+  if (g.flashT > 0 && g.mode !== 'end') {
+    ctx.fillStyle = `rgba(199,84,80,${g.flashT * 0.22})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+  if (g.mode === 'end') {
+    ctx.fillStyle = `rgba(250,248,244,${clamp(g.flashT, 0, 1)})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+// ———— 主循环 ————
+let lastT = performance.now();
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  if (game.mode === 'play' || game.mode === 'void') update(dt);
+  render(now / 1000);
+}
+requestAnimationFrame(loop);
+
+// ———— 开始 / 重开 ————
+function startGame() {
+  audioInit();
+  const g = game;
+  g.mode = 'play';
+  g.pr = 30;
+  g.unitScale = 1e-10 / 30;
+  g.px = 0; g.py = 0; g.vx = 0; g.vy = 0;
+  g.zoom = 42 / 30;
+  g.ents.length = 0;
+  g.parts.length = 0;
+  g.eats = 0;
+  g.eaten = {};
+  g.universeEaten = false;
+  g.turtle = null;
+  g.startAt = performance.now();
+  lastStage = '';
+  for (let i = 0; i < 90; i++) spawnOne(0.35, 1.8); // 开局先铺一屏
+  document.getElementById('intro').classList.add('hidden');
+  document.getElementById('ending').classList.add('hidden');
+  document.getElementById('hud').style.display = 'block';
+  document.getElementById('progWrap').style.display = 'block';
+}
+document.getElementById('btnStart').addEventListener('click', startGame);
+document.getElementById('btnAgain').addEventListener('click', startGame);
+
+// 进度条阶段刻度
+const pw = document.getElementById('progWrap');
+for (const [s] of STAGES) {
+  const m = document.createElement('div');
+  m.className = 'mark';
+  m.style.left = clamp((s + 10.3) / 37.5 * 100, 0, 100) + '%';
+  pw.appendChild(m);
+}
+
+// ———— 测试钩子 ————
+window.T = {
+  game,
+  start: startGame,
+  setSize(m) { // 直接跳到某个绝对尺寸（米）
+    game.unitScale = m / game.pr;
+    game.ents = game.ents.filter((e) => e.T.turtle);
+    for (let i = 0; i < 90; i++) spawnOne(0.35, 1.8);
+  },
+  eatAll(n = 5) { // 吃掉 n 个最近的可食实体
+    for (let k = 0; k < n; k++) {
+      let bi = -1, bd = Infinity;
+      for (let i = 0; i < game.ents.length; i++) {
+        const e = game.ents[i];
+        if (e.r >= game.pr * 0.85) continue;
+        const d = Math.hypot(e.x - game.px, e.y - game.py);
+        if (d < bd) { bd = d; bi = i; }
+      }
+      if (bi < 0) break;
+      eat(game.ents[bi], bi);
+    }
+  },
+};
+</script>
+</body>
+</html>
