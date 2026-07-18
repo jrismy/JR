@@ -768,6 +768,16 @@ function dNebula(e, t) {
     C(Math.cos(a) * rand(0, 0.001) + Math.cos(a) * 0.6, Math.sin(a) * 0.55, 0.03); F('#FFFFFF');
   }
 }
+function dOpenCluster(e, t) { // 疏散星团：松散一把星
+  for (let i = 0; i < 9; i++) {
+    const a = e.ph + i * 2.6, r = ((i * 7) % 9) / 9;
+    C(Math.cos(a) * r, Math.sin(a) * r * 0.92, 0.05 + (i % 3) * 0.025);
+    F(i % 3 ? '#E8ECF4' : '#BCD8F0');
+  }
+  ctx.globalAlpha = 0.3;
+  C(0, 0, 0.8); F('rgba(200,215,240,0.3)');
+  ctx.globalAlpha = 1;
+}
 function dCluster(e, t) {
   for (let i = 0; i < 16; i++) {
     const a = e.ph + i * 2.4, r = ((i * 7) % 10) / 10;
@@ -801,6 +811,17 @@ function dDwarfGalaxy(e, t) {
   g.addColorStop(0, 'rgba(216,220,240,0.8)'); g.addColorStop(1, 'rgba(0,0,0,0)');
   C(0, 0, 1); ctx.fillStyle = g; ctx.fill();
   for (let i = 0; i < 10; i++) { const a = e.ph + i * 2.1; C(Math.cos(a) * ((i % 4) / 5), Math.sin(a) * ((i % 3) / 4), 0.04); F('#E8ECF4'); }
+}
+function dGalaxyGroup(e, t) { // 星系群：三两成群
+  for (let i = 0; i < 3; i++) {
+    const a = e.ph + i * 2.2, r = i ? 0.5 : 0;
+    ctx.save();
+    ctx.translate(Math.cos(a) * r, Math.sin(a) * r * 0.85);
+    ctx.scale(0.42 - i * 0.06, 0.42 - i * 0.06);
+    ctx.rotate(a * 2);
+    i === 1 ? dDwarfGalaxy(e, t) : dGalaxy(e, t);
+    ctx.restore();
+  }
 }
 function dGalaxyCluster(e, t) {
   for (let i = 0; i < 7; i++) {
@@ -1177,6 +1198,76 @@ function dBlackhole(e, t) {
   C(0, 0, 0.62); ST('rgba(255,230,180,0.9)', 0.05);
   ctx.restore();
 }
+// —— 食物链补层（消除断粮带）——
+function dMegacity(e, t) { // 城市群
+  ctx.strokeStyle = 'rgba(120,112,96,0.6)';
+  ctx.lineWidth = 0.04;
+  for (let k = 0; k < 3; k++) {
+    const a1 = e.ph + k * 2.1, a2 = e.ph + (k + 1) * 2.1;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a1) * 0.55, Math.sin(a1) * 0.55);
+    ctx.lineTo(Math.cos(a2) * 0.55, Math.sin(a2) * 0.55);
+    ctx.stroke();
+  }
+  for (let k = 0; k < 4; k++) {
+    const a = e.ph + k * 1.6, r = k ? 0.55 : 0;
+    const cx = Math.cos(a) * r, cy = Math.sin(a) * r;
+    C(cx, cy, 0.3 - k * 0.04); F('rgba(168,158,138,0.6)');
+    ctx.fillStyle = '#B0A890';
+    for (let m = 0; m < 5; m++) {
+      const b = e.ph * 3 + m * 2.5;
+      ctx.fillRect(cx + Math.cos(b) * 0.12 - 0.04, cy + Math.sin(b) * 0.12 - 0.04, 0.08, 0.08);
+    }
+  }
+}
+function dCloudBank(e, t) { // 云海
+  ctx.globalAlpha = 0.8;
+  for (let k = 0; k < 6; k++) {
+    const a = e.ph + k * 1.1;
+    C(-0.8 + k * 0.32, Math.sin(a) * 0.25, 0.32 + (k % 3) * 0.08);
+    F(k % 2 ? '#E8ECF0' : '#DCE4EA');
+  }
+  ctx.globalAlpha = 1;
+}
+function dInterstellar(e, t) { // 星际云
+  ctx.globalAlpha = 0.45;
+  for (let k = 0; k < 5; k++) {
+    const a = e.ph + k * 1.9;
+    C(Math.cos(a) * 0.45, Math.sin(a) * 0.4, 0.5);
+    F(k % 2 ? 'rgba(140,170,210,0.5)' : 'rgba(110,140,180,0.45)');
+  }
+  ctx.globalAlpha = 1;
+  for (let k = 0; k < 5; k++) {
+    const a = e.ph * 2 + k * 2.4;
+    C(Math.cos(a) * 0.55, Math.sin(a) * 0.5, 0.025); F('#E8ECF4');
+  }
+}
+function dDarkNebula(e, t) { // 暗星云：暗团 + 边缘泛光
+  for (let k = 0; k < 5; k++) {
+    const a = e.ph + k * 1.9;
+    C(Math.cos(a) * 0.4, Math.sin(a) * 0.36, 0.46);
+    F('rgba(16,12,26,0.85)');
+  }
+  ctx.globalAlpha = 0.5;
+  C(-0.3, -0.3, 0.55); ST('rgba(200,170,255,0.5)', 0.05);
+  C(0.35, 0.25, 0.4); ST('rgba(160,190,235,0.4)', 0.04);
+  ctx.globalAlpha = 1;
+}
+function dStarStream(e, t) { // 恒星流：斜向星带
+  ctx.save(); ctx.rotate(e.ph);
+  const g = ctx.createLinearGradient(-1, 0, 1, 0);
+  g.addColorStop(0, 'rgba(200,210,240,0)');
+  g.addColorStop(0.5, 'rgba(200,210,240,0.25)');
+  g.addColorStop(1, 'rgba(200,210,240,0)');
+  EL(0, 0, 1, 0.3); ctx.fillStyle = g; ctx.fill();
+  for (let k = 0; k < 22; k++) {
+    const hx = ((k * 13) % 21) / 10.5 - 1;
+    const hy = (((k * 7) % 11) / 11 - 0.5) * 0.5 * (1 - Math.abs(hx) * 0.6);
+    C(hx, hy, 0.02 + (k % 3) * 0.015);
+    F(k % 5 ? '#DCE2F0' : '#FFE9BC');
+  }
+  ctx.restore();
+}
 function dCrumb(e, t) {
   const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
   g.addColorStop(0, '#FFF2CE'); g.addColorStop(0.5, 'rgba(255,216,144,0.6)'); g.addColorStop(1, 'rgba(0,0,0,0)');
@@ -1294,6 +1385,8 @@ const TYPES = [
   { n: '城市', rm: 9500, g: [3.6, 6], w: 2, mv: 'static', d: dCity },
   { n: '积云', rm: 9000, g: [3.4, 6.2], w: 1.8, mv: 'float', d: dCloud },
   { n: '岛屿', rm: 5.2e4, g: [4.4, 6.5], w: 2, mv: 'static', d: dIsland },
+  { n: '城市群', rm: 1.2e5, g: [4.6, 6.4], w: 2, mv: 'static', d: dMegacity },
+  { n: '云海', rm: 7e4, g: [4.4, 6.4], w: 1.6, mv: 'float', d: dCloudBank },
   { n: '山脉', rm: 3.2e5, g: [5, 6.8], w: 1.8, mv: 'static', d: dRange },
   { n: '大陆', rm: 2.6e6, g: [5.8, 7.4], w: 1.8, mv: 'static', d: dContinent },
   { n: '台风', rm: 2.5e5, g: [4.8, 6.7], w: 1.4, mv: 'float', d: dTyphoon },
@@ -1308,10 +1401,15 @@ const TYPES = [
   { n: '红巨星', rm: 2e11, g: [9.2, 12.4], w: 1.8, mv: 'drift', d: (e, t) => dStar(e, t, '#FFE0C8', '#E07850') },
   { n: '黑洞', rm: 1e10, g: [8.6, 11.8], w: 1.2, mv: 'drift', d: dBlackhole },
   { n: '恒星系', rm: 4.5e12, g: [10.5, 14], w: 2.4, mv: 'drift', d: dSolarSystem },
+  { n: '星际云', rm: 6e13, g: [12.2, 15.4], w: 2.4, mv: 'float', d: dInterstellar },
+  { n: '暗星云', rm: 8e14, g: [13.4, 16.6], w: 2.2, mv: 'float', d: dDarkNebula },
   { n: '星云', rm: 5e15, g: [12.8, 17.4], w: 2.4, mv: 'float', d: dNebula },
+  { n: '疏散星团', rm: 4e16, g: [15.2, 18.2], w: 2.4, mv: 'drift', d: dOpenCluster },
   { n: '球状星团', rm: 2e17, g: [14.4, 19], w: 2, mv: 'drift', d: dCluster },
+  { n: '恒星流', rm: 5e18, g: [16.8, 20.4], w: 2.2, mv: 'drift', d: dStarStream },
   { n: '矮星系', rm: 8e19, g: [17, 21.6], w: 2.2, mv: 'drift', d: dDwarfGalaxy },
   { n: '旋涡星系', rm: 5e20, g: [18, 22.8], w: 2.4, mv: 'drift', d: dGalaxy },
+  { n: '星系群', rm: 5e21, g: [20.2, 24.2], w: 2.2, mv: 'drift', d: dGalaxyGroup },
   { n: '星系团', rm: 5e23, g: [21, 25.4], w: 2.2, mv: 'drift', d: dGalaxyCluster },
   { n: '宇宙之网', rm: 3e24, g: [22.6, 26.4], w: 2, mv: 'static', d: dWebNode },
   { n: '可观测宇宙', rm: 4.4e26, g: [25.2, 27.6], w: 3, mv: 'drift', d: dUniverse, unique: 1 },
@@ -1381,7 +1479,14 @@ function spawnOne(d0 = 1.05, d1 = 2.0) {
     n = noise2(sx / game.pr, sy / game.pr);
     kind = s < -0.35 ? (n < 0.34 ? 'indoor' : 'grass') : (n < 0.30 ? 'water' : 'land');
   }
-  const desiredRel = Math.random() < 0.68 ? rand(0.18, 0.82) : rand(1.1, 2.4);
+  // 反卡关一：附近可吃的太少时，本次强制刷食物（原版式"身边永远有饭"）
+  let edible = 0;
+  const near = viewR() * 2.2;
+  for (const e of game.ents) {
+    if (e.r < game.pr * 0.92 && Math.abs(e.x - game.px) < near && Math.abs(e.y - game.py) < near) edible++;
+  }
+  const needFood = edible < 14;
+  const desiredRel = (needFood || Math.random() < 0.76) ? rand(0.2, 0.72) : rand(1.1, 2.4);
   const cands = [];
   for (const T of TYPES) {
     if (T.crumb || T.turtle) continue;
@@ -1389,27 +1494,31 @@ function spawnOne(d0 = 1.05, d1 = 2.0) {
     if (!bioOK(T, kind, n)) continue;
     if (T.unique && (game.universeEaten || game.ents.some((e) => e.T.unique))) continue;
     const rel = T.rm / sizeM();
-    if (rel < 0.07 || rel > 3.2) continue;
+    if (rel < 0.05 || rel > 3.5) continue;
     // 权重按与期望相对大小的接近程度衰减
     const dist = Math.abs(Math.log(rel / desiredRel));
     cands.push([T, T.w / (1 + dist * 2), rel]);
   }
-  if (!cands.length) return;
+  const mk = (T, r) => game.ents.push({
+    T, r, x: sx, y: sy, vx: 0, vy: 0, ph: rand(TAU), dir: rand(TAU),
+    col: T.vary ? `hsl(${rand(0, 360) | 0},${rand(30, 55) | 0}%,${rand(40, 62) | 0}%)` : null,
+  });
+  if (!cands.length) {
+    // 反卡关二：食物链断层兜底 —— 刷该尺度任意在场物种的小型个体
+    if (!needFood) return;
+    const pool = TYPES.filter((T) => !T.crumb && !T.turtle && !T.unique &&
+      s >= T.g[0] && s <= T.g[1] && bioOK(T, kind, n));
+    if (!pool.length) return;
+    mk(pick(pool), game.pr * rand(0.3, 0.65));
+    return;
+  }
   let sum = 0;
   for (const c of cands) sum += c[1];
   let roll = Math.random() * sum;
   let chosen = cands[0];
   for (const c of cands) { roll -= c[1]; if (roll <= 0) { chosen = c; break; } }
   const [T, , rel] = chosen;
-  const r = game.pr * rel * rand(0.75, 1.3);
-  game.ents.push({
-    T, r,
-    x: sx, y: sy,
-    vx: 0, vy: 0,
-    ph: rand(TAU),
-    dir: rand(TAU),
-    col: T.vary ? `hsl(${rand(0, 360) | 0},${rand(30, 55) | 0}%,${rand(40, 62) | 0}%)` : null,
-  });
+  mk(T, clamp(game.pr * rel * rand(0.72, 1.4), game.pr * 0.12, game.pr * 2.8));
 }
 
 // ———— 粒子 ————
@@ -1448,7 +1557,7 @@ function showStage(name) {
 // ———— 吞吃与受击 ————
 function eat(e, i) {
   const rel = e.r / game.pr;
-  game.pr = Math.sqrt(game.pr * game.pr + 0.95 * e.r * e.r);
+  game.pr = Math.sqrt(game.pr * game.pr + 1.12 * e.r * e.r);
   game.eats++;
   if (!game.eaten[e.T.n]) {
     game.eaten[e.T.n] = 0;
@@ -1476,7 +1585,7 @@ function hurt(e) {
   if (game.hurtT > 0) return;
   game.hurtT = 0.9;
   game.flashT = 1;
-  game.pr *= 0.97; // 撞掉一点质量
+  game.pr *= 0.985; // 撞掉一点质量
   const dx = game.px - e.x, dy = game.py - e.y;
   const l = Math.hypot(dx, dy) || 1;
   game.vx += (dx / l) * game.pr * 9;
@@ -1568,6 +1677,25 @@ function update(dt) {
   if (g.mode === 'play') {
     const target = 140;
     for (let k = 0; k < 4 && g.ents.length < target; k++) spawnOne();
+    // 食物压力：附近可吃的太少时，无视总量上限强制补粮，并驱逐视野外巨物腾位
+    const vrNow = viewR();
+    let edibleNear = 0;
+    const near2 = vrNow * 2.2;
+    for (const e of g.ents) {
+      if (e.r < g.pr * 0.92 && Math.abs(e.x - g.px) < near2 && Math.abs(e.y - g.py) < near2) edibleNear++;
+    }
+    if (edibleNear < 14 && g.ents.length < 230) {
+      for (let k = 0; k < 3; k++) spawnOne(0.7, 1.6);
+      if (g.ents.length > target) {
+        for (let i = g.ents.length - 1; i >= 0; i--) {
+          const e = g.ents[i];
+          if (e.r > g.pr * 1.25 && Math.hypot(e.x - g.px, e.y - g.py) > vrNow * 1.4) {
+            g.ents.splice(i, 1);
+            break;
+          }
+        }
+      }
+    }
   } else if (g.mode === 'void') {
     g.voidT += dt;
     if (g.voidT > 2.2 && !g.turtle) spawnTurtle();
@@ -1610,16 +1738,16 @@ function update(dt) {
       e.vy = lerp(e.vy, ty * sp, 1 - Math.exp(-3 * dt));
       e.x += e.vx * dt; e.y += e.vy * dt;
     }
-    // 吸附（略小的食物被轻微吸引）
-    if (rel < 0.85 && ds < g.pr * 1.9 && ds > 0.01) {
-      const pull = g.pr * 2.4 * (1 - ds / (g.pr * 1.9));
+    // 吸附（略小的食物被吸进嘴里，原版的"吸尘器"手感）
+    if (rel < 0.92 && ds < g.pr * 2.1 && ds > 0.01) {
+      const pull = g.pr * 3.1 * (1 - ds / (g.pr * 2.1));
       e.x += (g.px - e.x) / ds * pull * dt;
       e.y += (g.py - e.y) / ds * pull * dt;
     }
-    // 碰撞
+    // 碰撞：略小即可吞，明显更大才撞人
     if (ds < g.pr + e.r * 0.35) {
-      if (rel < 0.85) { eat(e, i); continue; }
-      else if (rel > 1.3 && !T.turtle) hurt(e);
+      if (rel < 0.92) { eat(e, i); continue; }
+      else if (rel > 1.25 && !T.turtle) hurt(e);
       else if (T.turtle && g.pr > e.r * 0.86) { eat(e, i); continue; }
       else if (T.turtle) hurt(e);
     }
@@ -1936,7 +2064,7 @@ function drawPlayer(t) {
   let mouthA = Math.atan2(g.vy, g.vx), mouthW = 0;
   let bd = Infinity;
   for (const e of g.ents) {
-    if (e.r >= g.pr * 0.85 && !(e.T.turtle && g.pr > e.r * 0.86)) continue;
+    if (e.r >= g.pr * 0.92 && !(e.T.turtle && g.pr > e.r * 0.86)) continue;
     const d = Math.hypot(e.x - g.px, e.y - g.py);
     if (d < bd) { bd = d; mouthA = Math.atan2(e.y - g.py, e.x - g.px); }
   }
@@ -2098,7 +2226,7 @@ window.T = {
       let bi = -1, bd = Infinity;
       for (let i = 0; i < game.ents.length; i++) {
         const e = game.ents[i];
-        if (e.r >= game.pr * 0.85) continue;
+        if (e.r >= game.pr * 0.92) continue;
         const d = Math.hypot(e.x - game.px, e.y - game.py);
         if (d < bd) { bd = d; bi = i; }
       }
