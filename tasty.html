@@ -267,15 +267,15 @@ function fmtSize(m) {
 
 // ———— 背景主题（按 S = log10(玩家半径m) 连续插值）————
 const BG_KEYS = [
-  // [S, 顶色, 底色, 尘点色, 尘点密度]
+  // [S, 顶色, 底色, 尘点色, 尘点密度]（底色层，场景绘制叠在其上）
   [-10.6, [10, 18, 30], [16, 30, 44], [120, 220, 235], 0.6],   // 量子之海
-  [-7.5, [12, 28, 34], [20, 46, 52], [130, 230, 200], 0.7],    // 细胞液
-  [-4.8, [30, 26, 20], [48, 40, 26], [190, 170, 130], 0.8],    // 尘土
-  [-2.6, [24, 34, 18], [44, 62, 30], [150, 200, 110], 0.7],    // 草叶之下
-  [-0.6, [40, 48, 38], [70, 82, 58], [180, 190, 160], 0.5],    // 街面草地
-  [1.4, [52, 56, 58], [80, 84, 82], [200, 200, 195], 0.4],     // 城市水泥
-  [3.4, [36, 52, 40], [62, 76, 52], [170, 200, 150], 0.4],     // 航拍大地
-  [5.4, [22, 36, 52], [30, 56, 78], [180, 220, 240], 0.3],     // 高空与海
+  [-7.5, [14, 32, 38], [22, 50, 56], [130, 230, 200], 0.7],    // 细胞液
+  [-6.0, [58, 44, 28], [72, 54, 34], [190, 170, 130], 0.3],    // 木地板底
+  [-2.6, [46, 52, 30], [58, 66, 38], [150, 200, 110], 0.3],    // 草地底
+  [-0.4, [54, 58, 60], [62, 66, 68], [200, 200, 195], 0.2],    // 街面沥青
+  [2.2, [50, 56, 58], [58, 66, 66], [200, 200, 195], 0.2],     // 城市俯瞰
+  [3.6, [44, 60, 46], [52, 70, 54], [170, 200, 150], 0.2],     // 航拍大地
+  [5.6, [28, 48, 66], [34, 58, 80], [180, 220, 240], 0.2],     // 高空与海
   [6.8, [8, 12, 22], [12, 18, 32], [230, 235, 245], 0.9],      // 近地空间
   [10, [6, 8, 18], [10, 12, 26], [235, 235, 250], 1],          // 深空
   [16, [10, 6, 22], [16, 10, 34], [220, 200, 255], 0.9],       // 星云际
@@ -283,6 +283,36 @@ const BG_KEYS = [
   [25.5, [16, 8, 26], [26, 12, 40], [255, 230, 250], 0.5],     // 宇宙之网
   [27.5, [4, 2, 8], [8, 4, 14], [120, 110, 140], 0.2],         // 虚空
 ];
+
+// ============================================================
+// 地带系统：背景与刷怪共用同一套噪声 —— 所见即所刷
+// 坐标全部用"尺度锚定"u = x/pr：整体重缩放时 x 与 pr 同除，图案连续。
+// ============================================================
+function noise2(ux, uy) {
+  const v = Math.sin(ux * 0.31 + Math.sin(uy * 0.23) * 1.7)
+    + Math.sin(uy * 0.27 + Math.sin(ux * 0.19 + 2.1) * 1.4);
+  return v * 0.25 + 0.5; // ≈ 0..1
+}
+function biomeAt(x, y) {
+  const s = S();
+  if (s < -6.5 || s > 6.5) return 'open';       // 微观流体 / 太空
+  const n = noise2(x / game.pr, y / game.pr);
+  if (s < -0.35) return n < 0.34 ? 'indoor' : 'grass'; // 地板区 / 草土区
+  return n < 0.30 ? 'water' : 'land';                  // 水域 / 陆地
+}
+// 实体地带类别：indoor=只在室内 water=只在深水 shore=近岸 ground=不下水 air/any=不限
+// n 为该点噪声值：越小水越深 —— 船只鲸鱼只刷在开阔水域，不挤小水塘
+function bioOK(T, kind, n) {
+  const b = T.bio || 'any';
+  if (b === 'any' || b === 'air') return true;
+  if (kind === 'open') return b !== 'indoor' && b !== 'water' && b !== 'shore';
+  if (b === 'indoor') return kind === 'indoor';
+  if (b === 'water') return n < 0.22;
+  if (b === 'shore') return n > 0.20 && n < 0.31;
+  if (b === 'ground') return kind !== 'water';
+  return true;
+}
+const cellHash = (i, j) => (((i * 73856093) ^ (j * 19349663)) >>> 0) / 4294967296;
 function bgAt(S) {
   let i = 0;
   while (i < BG_KEYS.length - 2 && S > BG_KEYS[i + 1][0]) i++;
@@ -1234,17 +1264,17 @@ const TYPES = [
   { n: '奶牛', rm: 0.95, g: [-0.6, 1.2], w: 1.4, mv: 'walk', flee: 1, d: dCow },
   { n: '马', rm: 1.05, g: [-0.5, 1.3], w: 1.4, mv: 'walk', flee: 1, d: dHorse },
   { n: '大象', rm: 2.6, g: [-0.1, 1.8], w: 1.2, mv: 'walk', flee: 1, d: dElephant },
-  { n: '鲸鱼', rm: 13, g: [0.7, 2.7], w: 1.4, mv: 'walk', flee: 1, d: dWhale },
+  { n: '鲸鱼', rm: 13, g: [1.3, 2.8], w: 1.4, mv: 'walk', flee: 1, d: dWhale },
   { n: '人', rm: 0.9, g: [-0.6, 1.7], w: 3, mv: 'walk', flee: 1, d: dHuman, vary: 1 },
   { n: '自行车骑手', rm: 1.1, g: [-0.3, 1.7], w: 1.4, mv: 'walk', flee: 1, d: dBike },
   { n: '汽车', rm: 2.4, g: [0, 2.1], w: 2.6, mv: 'walk', flee: 1, d: dCar, vary: 1 },
   { n: '卡车', rm: 4.6, g: [0.3, 2.4], w: 1.6, mv: 'walk', flee: 1, d: dTruck },
   { n: '路灯', rm: 4.2, g: [0, 2.4], w: 1.4, mv: 'static', d: dLamp },
   { n: '公交车', rm: 6.5, g: [0.3, 2.4], w: 1.4, mv: 'walk', flee: 1, d: dBus },
-  { n: '帆船', rm: 8, g: [0.4, 2.5], w: 1.2, mv: 'float', d: dSailboat },
-  { n: '直升机', rm: 7, g: [0.4, 2.5], w: 1.2, mv: 'drift', fast: 1, d: dHeli },
-  { n: '热气球', rm: 11, g: [0.6, 2.7], w: 1.2, mv: 'float', d: dBalloon },
-  { n: '客机', rm: 32, g: [1.2, 3.4], w: 1.4, mv: 'drift', fast: 1, d: dPlane },
+  { n: '帆船', rm: 8, g: [1.0, 2.5], w: 1.0, mv: 'float', d: dSailboat },
+  { n: '直升机', rm: 7, g: [0.6, 2.5], w: 0.5, mv: 'drift', fast: 1, d: dHeli },
+  { n: '热气球', rm: 11, g: [0.6, 2.7], w: 0.6, mv: 'float', d: dBalloon },
+  { n: '客机', rm: 32, g: [1.2, 3.4], w: 0.7, mv: 'drift', fast: 1, d: dPlane },
   { n: '树', rm: 4, g: [0, 2.7], w: 2.4, mv: 'static', d: dTree },
   { n: '民房', rm: 7, g: [0.5, 2.8], w: 2.2, mv: 'static', d: dHouse },
   { n: '大楼', rm: 32, g: [1.2, 3.4], w: 2.4, mv: 'static', d: dBuilding, vary: 1 },
@@ -1289,6 +1319,22 @@ const TYPES = [
   { n: '星屑', rm: 0, g: [99, 99], w: 0, mv: 'drift', d: dCrumb, crumb: 1 },
   { n: '世界龟阿图因', rm: 0, g: [99, 99], w: 0, mv: 'drift', d: dTurtle, turtle: 1 },
 ];
+// 地带归属（未列出 = any 任意）
+{
+  const BIO = {
+    indoor: ['面包屑', '米粒', '图钉', '纽扣', '玻璃弹珠', '铜钱', '肥皂', '马克杯', '书本', '橡皮鸭', '蟑螂'],
+    water: ['帆船', '集装箱货轮', '冰山', '鲸鱼', '岛屿'],
+    shore: ['跨海大桥'],
+    air: ['积云', '直升机', '热气球', '客机', '台风'],
+    ground: ['尘螨', '沙粒', '蚜虫', '蚂蚁', '甲虫', '蜘蛛', '青蛙', '老鼠', '麻雀', '母鸡', '蛇', '猪', '奶牛', '马', '大象', '猫', '狗', '人', '自行车骑手', '汽车', '卡车', '公交车', '树', '民房', '大楼', '摩天大楼', '体育场', '街区', '路灯', '摩天轮', '电视塔', '山峰', '湖泊', '城市', '农田', '森林', '火山', '山脉'],
+  };
+  for (const [bio, names] of Object.entries(BIO)) {
+    for (const n of names) {
+      const T = TYPES.find((t) => t.n === n);
+      if (T) T.bio = bio;
+    }
+  }
+}
 
 // ============================================================
 // 游戏状态
@@ -1325,11 +1371,22 @@ addEventListener('pointerup', () => { pointerOn = false; });
 // ———— 刷生态 ————
 function spawnOne(d0 = 1.05, d1 = 2.0) {
   const s = S();
+  // 先定位置、查地带，再从符合该地带的物种里挑 —— 分布与背景一致
+  const a = rand(TAU);
+  const d = viewR() * rand(d0, d1);
+  const sx = game.px + Math.cos(a) * d;
+  const sy = game.py + Math.sin(a) * d;
+  let kind = 'open', n = 0.5;
+  if (s >= -6.5 && s <= 6.5) {
+    n = noise2(sx / game.pr, sy / game.pr);
+    kind = s < -0.35 ? (n < 0.34 ? 'indoor' : 'grass') : (n < 0.30 ? 'water' : 'land');
+  }
   const desiredRel = Math.random() < 0.68 ? rand(0.18, 0.82) : rand(1.1, 2.4);
   const cands = [];
   for (const T of TYPES) {
     if (T.crumb || T.turtle) continue;
     if (s < T.g[0] || s > T.g[1]) continue;
+    if (!bioOK(T, kind, n)) continue;
     if (T.unique && (game.universeEaten || game.ents.some((e) => e.T.unique))) continue;
     const rel = T.rm / sizeM();
     if (rel < 0.07 || rel > 3.2) continue;
@@ -1344,13 +1401,10 @@ function spawnOne(d0 = 1.05, d1 = 2.0) {
   let chosen = cands[0];
   for (const c of cands) { roll -= c[1]; if (roll <= 0) { chosen = c; break; } }
   const [T, , rel] = chosen;
-  const a = rand(TAU);
-  const d = viewR() * rand(d0, d1);
   const r = game.pr * rel * rand(0.75, 1.3);
   game.ents.push({
     T, r,
-    x: game.px + Math.cos(a) * d,
-    y: game.py + Math.sin(a) * d,
+    x: sx, y: sy,
     vx: 0, vy: 0,
     ph: rand(TAU),
     dir: rand(TAU),
@@ -1587,6 +1641,25 @@ function update(dt) {
     p.x += p.vx * dt; p.y += p.vy * dt;
   }
 
+  // 地带复核：成长使图案缓慢演变，错位的水上/陆上实体在视野外悄悄撤走
+  g.bioCheckT = (g.bioCheckT || 0) - dt;
+  if (g.bioCheckT <= 0 && g.mode === 'play') {
+    g.bioCheckT = 1.5;
+    const s2 = S();
+    if (s2 >= -6.5 && s2 <= 6.5) {
+      for (let i = g.ents.length - 1; i >= 0; i--) {
+        const e = g.ents[i];
+        const b = e.T.bio;
+        if (b !== 'water' && b !== 'ground' && b !== 'indoor') continue;
+        const ds = Math.hypot(e.x - g.px, e.y - g.py);
+        if (ds < vr * 1.15) continue; // 视野内不动，避免消失感
+        const n2 = noise2(e.x / g.pr, e.y / g.pr);
+        const bad = (b === 'water' && n2 > 0.30) || (b === 'ground' && n2 < 0.27) ||
+          (b === 'indoor' && s2 < -0.35 && n2 > 0.36);
+        if (bad) g.ents.splice(i, 1);
+      }
+    }
+  }
   // 阶段横幅
   if (g.mode === 'play') {
     const st = stageAt(S());
@@ -1602,32 +1675,257 @@ function update(dt) {
 // ============================================================
 // 渲染
 // ============================================================
-// 视差尘点（固定网格哈希，无状态）
-function drawDots(bg) {
+// ============================================================
+// 程序化场景背景：按尺度交叉淡入的画手（世界空间，u=x/pr 锚定）
+// ============================================================
+// 遍历 u 空间网格，回调 (i, j, 世界x, 世界y, 世界边长, 哈希)
+function eachCell(cu, fn) {
   const g = game;
-  const layerCfg = [[0.35, 2.2], [0.65, 1.4]];
-  ctx.fillStyle = rgb(bg.dot, 0.5);
-  for (const [par, size] of layerCfg) {
-    const cell = 130;
-    const ox = g.px * par, oy = g.py * par;
-    const x0 = Math.floor((ox - W / 2 / g.zoom * 1.2) / cell) * cell;
-    const y0 = Math.floor((oy - H / 2 / g.zoom * 1.2) / cell) * cell;
-    const cols = Math.ceil(W / g.zoom * 1.2 / cell) + 2;
-    const rows = Math.ceil(H / g.zoom * 1.2 / cell) + 2;
-    if (cols * rows > 900) continue;
-    for (let iy = 0; iy < rows; iy++) {
-      for (let ix = 0; ix < cols; ix++) {
-        const cx = x0 + ix * cell, cy = y0 + iy * cell;
-        const h = ((cx * 73856093) ^ (cy * 19349663)) >>> 0;
-        if ((h % 100) / 100 > bg.den) continue;
-        const jx = cx + (h % 97), jy = cy + (h % 71);
-        const sx = (jx - ox) + g.px, sy = (jy - oy) + g.py;
-        ctx.beginPath();
-        ctx.arc(sx, sy, size / g.zoom * (0.6 + (h % 5) / 8), 0, TAU);
-        ctx.fill();
-      }
+  const cw = cu * g.pr;
+  const hw = W / 2 / g.zoom + cw, hh = H / 2 / g.zoom + cw;
+  const i0 = Math.floor((g.px - hw) / cw), i1 = Math.ceil((g.px + hw) / cw);
+  const j0 = Math.floor((g.py - hh) / cw), j1 = Math.ceil((g.py + hh) / cw);
+  if ((i1 - i0) * (j1 - j0) > 1400) return;
+  for (let j = j0; j <= j1; j++) {
+    for (let i = i0; i <= i1; i++) {
+      fn(i, j, i * cw, j * cw, cw, cellHash(i, j));
     }
   }
+}
+// 微观流体：大团半透明胞膜 + 悬浮颗粒
+function paintFluid() {
+  eachCell(14, (i, j, x, y, cw, h) => {
+    if (h < 0.28) {
+      ctx.beginPath();
+      ctx.arc(x + (h * 91 % 1) * cw, y + (h * 57 % 1) * cw, cw * (0.35 + h * 0.35), 0, TAU);
+      ctx.fillStyle = 'rgba(120,200,190,0.045)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(150,220,205,0.08)';
+      ctx.lineWidth = cw * 0.015;
+      ctx.stroke();
+    }
+  });
+  eachCell(3.4, (i, j, x, y, cw, h) => {
+    if (h < 0.4) {
+      ctx.beginPath();
+      ctx.arc(x + (h * 83 % 1) * cw, y + (h * 41 % 1) * cw, cw * 0.05, 0, TAU);
+      ctx.fillStyle = 'rgba(160,225,215,0.22)';
+      ctx.fill();
+    }
+  });
+}
+// 地板/草土：草土打底，室内区以圆融边缘覆盖木地板（地毯边界感）
+const WOODS = ['#6E5334', '#7A5C3A', '#66492C', '#755838'];
+const GRASSES = ['#4E5E32', '#52623A', '#485A30', '#556438'];
+function paintFloorGrass() {
+  const pr = game.pr;
+  // 草土基底 + 随机朝向的草簇/卵石/落叶
+  eachCell(2.2, (i, j, x, y, cw, h) => {
+    ctx.fillStyle = GRASSES[(h * 4) | 0];
+    ctx.fillRect(x, y, cw + 1, cw + 1);
+    const jx = x + cw * (h * 89 % 1), jy = y + cw * (h * 53 % 1);
+    if (h < 0.34) { // 草簇（随机旋转）
+      ctx.save();
+      ctx.translate(jx, jy);
+      ctx.rotate(h * 40);
+      ctx.strokeStyle = 'rgba(122,158,72,0.8)';
+      ctx.lineWidth = cw * 0.035;
+      for (const k of [-1, 0, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(k * cw * 0.05, -cw * 0.13, k * cw * 0.11, -cw * 0.19);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else if (h > 0.94) { // 卵石
+      EL(jx, jy, cw * 0.09, cw * 0.06, h * 7);
+      F('rgba(145,140,124,0.85)');
+    } else if (h > 0.9) { // 落叶
+      EL(jx, jy, cw * 0.1, cw * 0.05, h * 11);
+      F('rgba(150,110,60,0.7)');
+    }
+  });
+  // 木地板区（圆形叠加互融 → 边缘圆润）
+  eachCell(2.2, (i, j, x, y, cw, h) => {
+    const n = noise2((x + cw / 2) / pr, (y + cw / 2) / pr);
+    if (n >= 0.345) return;
+    ctx.fillStyle = WOODS[(cellHash(9, j) * 4) | 0]; // 颜色按行 → 整条木板
+    C(x + cw / 2, y + cw / 2, cw * 0.8);
+    ctx.fill();
+  });
+  // 板缝与木节（只画在木区内部）
+  eachCell(2.2, (i, j, x, y, cw, h) => {
+    const n = noise2((x + cw / 2) / pr, (y + cw / 2) / pr);
+    if (n >= 0.30) return;
+    ctx.fillStyle = 'rgba(40,26,14,0.45)';
+    ctx.fillRect(x - 1, y, cw + 2, cw * 0.04); // 横向板缝
+    if (h < 0.3) ctx.fillRect(x + cw * (0.2 + h * 2), y, cw * 0.035, cw); // 竖拼缝
+    if (h > 0.87) { // 木节
+      EL(x + cw * (h * 13 % 1), y + cw * (h * 17 % 1), cw * 0.055, cw * 0.035, h);
+      ST('rgba(40,26,14,0.55)', cw * 0.02);
+    }
+  });
+}
+// 街道：正交路网(连贯街区) + 人行道 + 街心绿地/广场 + 圆润水塘
+function paintStreet() {
+  const pr = game.pr;
+  const P = 8.4, RW = 1.35; // 街区周期 / 路宽（u 单位）
+  eachCell(2.1, (i, j, x, y, cw, h) => {
+    const ux = (x + cw / 2) / pr, uy = (y + cw / 2) / pr;
+    const mx = ((ux % P) + P) % P, my = ((uy % P) + P) % P;
+    const onX = mx < RW, onY = my < RW;
+    if (onX || onY) {
+      // 马路
+      ctx.fillStyle = '#33373B';
+      ctx.fillRect(x, y, cw + 1, cw + 1);
+      ctx.fillStyle = 'rgba(225,225,215,0.55)';
+      if (onX && !onY) { // 纵向路：中线虚线
+        const cxw = (Math.floor(ux / P) * P + RW / 2) * pr;
+        if (((uy * 1.4) % 2 + 2) % 2 < 1) ctx.fillRect(cxw - cw * 0.035, y + cw * 0.1, cw * 0.07, cw * 0.5);
+      } else if (onY && !onX) {
+        const cyw = (Math.floor(uy / P) * P + RW / 2) * pr;
+        if (((ux * 1.4) % 2 + 2) % 2 < 1) ctx.fillRect(x + cw * 0.1, cyw - cw * 0.035, cw * 0.5, cw * 0.07);
+      }
+      return;
+    }
+    // 街区内部：贴路一圈人行道，中间庭院
+    const d = Math.min(mx - RW, P - mx, my - RW, P - my);
+    if (d < 0.85) {
+      ctx.fillStyle = ((i + j) % 2) ? '#5C6266' : '#596066';
+      ctx.fillRect(x, y, cw + 1, cw + 1);
+      ctx.strokeStyle = 'rgba(30,34,38,0.35)';
+      ctx.lineWidth = cw * 0.02;
+      ctx.strokeRect(x, y, cw, cw);
+      return;
+    }
+    const bh = cellHash(Math.floor(ux / P) + 3000, Math.floor(uy / P));
+    if (bh < 0.38) { // 街心公园
+      ctx.fillStyle = '#4E6A3C';
+      ctx.fillRect(x, y, cw + 1, cw + 1);
+      if (h < 0.3) { // 树冠簇
+        const jx = x + cw * (h * 89 % 1), jy = y + cw * (h * 53 % 1);
+        for (let k = 0; k < 3; k++) {
+          C(jx + Math.cos(h * 40 + k * 2.1) * cw * 0.08, jy + Math.sin(h * 40 + k * 2.1) * cw * 0.08, cw * 0.11);
+          F('rgba(58,82,42,0.9)');
+        }
+      }
+    } else { // 广场地坪
+      ctx.fillStyle = bh < 0.7 ? '#6A6660' : '#706A62';
+      ctx.fillRect(x, y, cw + 1, cw + 1);
+      if (h > 0.93) { C(x + cw * 0.5, y + cw * 0.5, cw * 0.07); ST('rgba(40,40,42,0.5)', cw * 0.025); } // 井盖
+    }
+  });
+  // 水塘（圆融，只出现在街区内部区域）
+  eachCell(2.1, (i, j, x, y, cw, h) => {
+    const ux = (x + cw / 2) / pr, uy = (y + cw / 2) / pr;
+    const mx = ((ux % P) + P) % P, my = ((uy % P) + P) % P;
+    if (mx < RW || my < RW) return;
+    const n = noise2(ux, uy);
+    if (n < 0.27) { C(x + cw / 2, y + cw / 2, cw * 0.85); F('#33607E'); }
+  });
+}
+// 大地：陆地基底 + 团簇林地/斜向农田/小镇，海岸线用圆形叠加圆融
+const LANDS = ['#5E7A44', '#66844A', '#71884E', '#7A7A50', '#63804A'];
+function paintTerrain() {
+  const pr = game.pr;
+  eachCell(3.0, (i, j, x, y, cw, h) => {
+    ctx.fillStyle = LANDS[(h * 5) | 0];
+    ctx.fillRect(x, y, cw + 1, cw + 1);
+    const jx = x + cw * (h * 89 % 1), jy = y + cw * (h * 53 % 1);
+    if (h < 0.11) { // 团簇林地（多圆互叠）
+      ctx.fillStyle = 'rgba(46,66,36,0.8)';
+      for (let k = 0; k < 5; k++) {
+        const a = h * 50 + k * 1.7;
+        C(jx + Math.cos(a) * cw * 0.16, jy + Math.sin(a) * cw * 0.13, cw * (0.12 + (k % 3) * 0.04));
+        ctx.fill();
+      }
+    } else if (h < 0.17) { // 斜向农田块
+      ctx.save();
+      ctx.translate(x + cw / 2, y + cw / 2);
+      ctx.rotate((h - 0.14) * 8);
+      ctx.fillStyle = '#C8B060';
+      ctx.fillRect(-cw * 0.34, -cw * 0.26, cw * 0.68, cw * 0.52);
+      ctx.strokeStyle = 'rgba(120,96,52,0.6)';
+      ctx.lineWidth = cw * 0.02;
+      for (let k = 1; k < 4; k++) {
+        ctx.beginPath();
+        ctx.moveTo(-cw * 0.34, -cw * 0.26 + cw * 0.52 * k / 4);
+        ctx.lineTo(cw * 0.34, -cw * 0.26 + cw * 0.52 * k / 4);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else if (h > 0.965) { // 小镇
+      ctx.fillStyle = 'rgba(160,150,130,0.9)';
+      for (let k = 0; k < 4; k++) {
+        ctx.fillRect(jx + Math.cos(k * 1.9) * cw * 0.1 - cw * 0.03, jy + Math.sin(k * 1.9) * cw * 0.1 - cw * 0.03, cw * 0.06, cw * 0.06);
+      }
+    }
+  });
+  // 海岸沙 → 浅海 → 深海：三层圆叠加，海岸线圆润自然
+  eachCell(3.0, (i, j, x, y, cw, h) => {
+    const n = noise2((x + cw / 2) / pr, (y + cw / 2) / pr);
+    if (n < 0.315) { C(x + cw / 2, y + cw / 2, cw * 0.88); F('#C0A878'); }
+  });
+  eachCell(3.0, (i, j, x, y, cw, h) => {
+    const n = noise2((x + cw / 2) / pr, (y + cw / 2) / pr);
+    if (n < 0.29) { C(x + cw / 2, y + cw / 2, cw * 0.84); F('#2E5A80'); }
+  });
+  eachCell(3.0, (i, j, x, y, cw, h) => {
+    const n = noise2((x + cw / 2) / pr, (y + cw / 2) / pr);
+    if (n < 0.21) {
+      C(x + cw / 2, y + cw / 2, cw * 0.78); F('#254B6E');
+    } else if (n < 0.29 && h < 0.4) { // 浅海波纹
+      ctx.strokeStyle = 'rgba(190,225,240,0.3)';
+      ctx.lineWidth = cw * 0.02;
+      ctx.beginPath();
+      ctx.arc(x + cw * (h * 89 % 1), y + cw * (h * 53 % 1), cw * 0.16, 0.3, 1.3);
+      ctx.stroke();
+    }
+  });
+}
+// 太空：星点 + 高尺度星云雾 + 宇宙网丝
+function paintSpace(s) {
+  eachCell(1.1, (i, j, x, y, cw, h) => {
+    if (h < 0.16) {
+      ctx.beginPath();
+      ctx.arc(x + (h * 89 % 1) * cw, y + (h * 53 % 1) * cw, cw * (0.02 + (h * 13 % 1) * 0.035), 0, TAU);
+      ctx.fillStyle = h < 0.03 ? 'rgba(255,230,190,0.9)' : 'rgba(230,235,250,0.8)';
+      ctx.fill();
+    }
+  });
+  if (s > 13) {
+    eachCell(9, (i, j, x, y, cw, h) => {
+      if (h < 0.16) {
+        const gx = x + cw / 2, gy = y + cw / 2;
+        const gr = ctx.createRadialGradient(gx, gy, 0, gx, gy, cw * 0.7);
+        const col = h < 0.06 ? '200,150,255' : h < 0.11 ? '150,200,235' : '235,160,190';
+        gr.addColorStop(0, `rgba(${col},${s > 25 ? 0.05 : 0.1})`);
+        gr.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gr;
+        ctx.fillRect(x - cw * 0.2, y - cw * 0.2, cw * 1.4, cw * 1.4);
+      }
+    });
+  }
+}
+// 交叉淡入调度
+function trapAlpha(s, a, b, fade = 0.45) {
+  return clamp(Math.min((s - a) / fade, (b - s) / fade, 1), 0, 1);
+}
+function drawBackdrop(sEff) {
+  const painters = [
+    [paintFluid, -12, -6.65],
+    [paintFloorGrass, -6.4, -0.5],
+    [paintStreet, -0.22, 2.55],
+    [paintTerrain, 2.85, 6.35],
+    [(s) => paintSpace(s), 6.6, 120],
+  ];
+  for (const [fn, a, b] of painters) {
+    const al = trapAlpha(sEff, a, b);
+    if (al <= 0.01) continue;
+    ctx.globalAlpha = al;
+    fn(sEff);
+  }
+  ctx.globalAlpha = 1;
 }
 function drawPlayer(t) {
   const g = game;
@@ -1700,7 +1998,7 @@ function render(t) {
   ctx.translate(W / 2 + shx, H / 2 + shy);
   ctx.scale(g.zoom, g.zoom);
   ctx.translate(-g.px, -g.py);
-  drawDots(bg);
+  drawBackdrop(g.mode === 'void' || g.mode === 'end' ? 28.5 : S());
   // 实体：大的先画
   const sorted = g.ents.slice().sort((a, b) => b.r - a.r);
   const vr = viewR();
