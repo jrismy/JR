@@ -29,19 +29,19 @@ export function updatePowers(G, dt) {
   // 筑基·灵气护盾：10秒一层抵一击
   if (pw.shield) {
     pw.shield.t -= dt;
-    if (pw.shield.t <= 0 && p.shield < 1) {
-      p.shield = 1;
-      pw.shield.t = 10;
-      vfx.spawnWave(p.x, p.y, 40, C.jian, 0.4, 2);
+    if (pw.shield.t <= 0) {
+      pw.shield.t = 10 * p.stats.powerCd;
+      if (p.shield < 1) {
+        p.shield = 1;
+        vfx.spawnWave(p.x, p.y, 40, C.jian, 0.4, 2);
+      }
     }
-    if (p.shield < 1 && pw.shield.t <= 0) pw.shield.t = 10;
-    if (p.shield >= 1 && pw.shield.t <= 0) pw.shield.t = 10;
   }
   // 金丹·金丹震爆：8秒冲击波+击退
   if (pw.nova) {
     pw.nova.t -= dt;
     if (pw.nova.t <= 0) {
-      pw.nova.t = 8;
+      pw.nova.t = 8 * p.stats.powerCd;
       const R = 190;
       vfx.spawnWave(p.x, p.y, R, C.gold, 0.55, 5, true);
       vfx.burst(p.x, p.y, C.gold, 16, 240, 8, 0.5);
@@ -63,7 +63,7 @@ export function updatePowers(G, dt) {
     pw.avatar.a += dt * 2.2;
     pw.avatar.shootT -= dt;
     if (pw.avatar.shootT <= 0) {
-      pw.avatar.shootT = 0.9;
+      pw.avatar.shootT = 0.9 * p.stats.powerCd;
       const ax = p.x + Math.cos(pw.avatar.a) * 42;
       const ay = p.y + Math.sin(pw.avatar.a) * 42;
       // 找目标直接闪电式命中（神念弹：细金线）
@@ -86,7 +86,7 @@ export function updatePowers(G, dt) {
   if (pw.swordrain) {
     pw.swordrain.t -= dt;
     if (pw.swordrain.t <= 0) {
-      pw.swordrain.t = 5;
+      pw.swordrain.t = 5 * p.stats.powerCd;
       let n = 0;
       for (let i = 0; i < enemies.count && n < 10; i++) {
         const e = enemies.items[i];
@@ -109,7 +109,7 @@ export function updatePowers(G, dt) {
   if (pw.chainthunder) {
     pw.chainthunder.t -= dt;
     if (pw.chainthunder.t <= 0) {
-      pw.chainthunder.t = 4.5;
+      pw.chainthunder.t = 4.5 * p.stats.powerCd;
       let from = { x: p.x, y: p.y };
       let cur = null;
       const hitSet = new Set();

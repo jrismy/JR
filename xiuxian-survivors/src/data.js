@@ -24,9 +24,9 @@ export const QUALITY = [
   { name: '中', particleCap: 450, glowScale: 0.33, envLayers: 1, fogCount: 2, decalCap: 60 },
 ];
 
-// ———— 经验曲线 ————
-export const xpNeed = (lv) => Math.floor(4 + lv * 2.4 + Math.pow(lv, 1.62) * 0.55);
-export const XP_INFLATION_PER_MIN = 0.09; // 敌人经验值每分钟 +9%
+// ———— 经验曲线（放宽版：升级更快）————
+export const xpNeed = (lv) => Math.floor(4 + lv * 2.0 + Math.pow(lv, 1.5) * 0.5);
+export const XP_INFLATION_PER_MIN = 0.13; // 敌人经验值每分钟 +13%
 
 // ———— 境界 ————
 // 每大境界九层；跨大境界触发突破演出并永久觉醒神通。
@@ -83,7 +83,7 @@ export const MODES = [
   },
 ];
 
-// ———— 武器（7种，同时最多5种）————
+// ———— 武器（17种，同时最多5种）————
 // 每级数值走 scale；vis 里的重数触发视觉质变（升级界面用 ✦ 标注）。
 export const MAX_WEAPONS = 5;
 export const WEAPONS = {
@@ -136,16 +136,96 @@ export const WEAPONS = {
     base: { cd: 1.5, dmg: 7, count: 1, speed: 250, turn: 3.2 },
     perLv: { dmg: 2.4, count: 0.55, cd: -0.07 },
   },
+  lihuo: {
+    name: '离火符', maxLv: 7, color: C.ember,
+    desc: '掷出离火符箓，落地片刻后引爆一片火海。',
+    evoNotes: { 3: '双符齐掷', 5: '爆炎转青', 7: '爆后生青莲焚地' },
+    base: { cd: 2.2, dmg: 16, count: 1, radius: 74, speed: 340 },
+    perLv: { dmg: 5, count: 0.4, radius: 5, cd: -0.1 },
+  },
+  yaoqin: {
+    name: '瑶琴音杀', maxLv: 7, color: C.jian,
+    desc: '拨动瑶琴，音波成环荡开伤敌。',
+    evoNotes: { 3: '双重音环', 5: '余音减速', 7: '音环范围大增' },
+    base: { cd: 2.4, dmg: 9, radius: 230 },
+    perLv: { dmg: 3, radius: 14, cd: -0.09 },
+  },
+  nianzhu: {
+    name: '流转念珠', maxLv: 7, color: C.gold,
+    desc: '掷出佛门念珠，去而复返，贯穿诸邪。',
+    evoNotes: { 3: '炽金拖尾', 5: '多珠齐出', 7: '归来时迸发佛光' },
+    base: { cd: 1.9, dmg: 9, count: 1, speed: 430, range: 270 },
+    perLv: { dmg: 3, count: 0.35, cd: -0.08 },
+  },
+  yuyin: {
+    name: '镇岳玉印', maxLv: 7, color: '#B8D8A8',
+    desc: '玉印天降，镇压妖群最密之处。',
+    evoNotes: { 3: '落印震波', 5: '印面鎏金', 7: '双印连落' },
+    base: { cd: 4.4, dmg: 38, radius: 92, stun: 0.5 },
+    perLv: { dmg: 11, radius: 6, cd: -0.22 },
+  },
+  qingteng: {
+    name: '缚灵青藤', maxLv: 7, color: C.ghost,
+    desc: '挥出青藤长鞭，横扫近前群妖。',
+    evoNotes: { 3: '藤生尖棘', 5: '反手二段横扫', 7: '藤蔓缠绕减速' },
+    base: { cd: 1.0, dmg: 8, range: 130, arc: 1.7 },
+    perLv: { dmg: 2.6, range: 8, cd: -0.04 },
+  },
+  liushi: {
+    name: '星火流石', maxLv: 7, color: C.ember,
+    desc: '引星火流石坠地，砸出燎原之势。',
+    evoNotes: { 3: '流石曳焰', 5: '陨石增巨', 7: '落点熔岩残留' },
+    base: { cd: 2.6, dmg: 19, count: 2, radius: 62 },
+    perLv: { dmg: 6, count: 0.4, cd: -0.12 },
+  },
+  yuelun: {
+    name: '太阴月轮', maxLv: 7, color: C.ice,
+    desc: '掷出月轮，于妖群之间连环弹射。',
+    evoNotes: { 3: '月轮残光', 5: '弹射次数大增', 7: '月华概率冻结' },
+    base: { cd: 2.0, dmg: 12, bounces: 4, speed: 470 },
+    perLv: { dmg: 3.6, bounces: 0.7, cd: -0.09 },
+  },
+  mukui: {
+    name: '御灵木傀', maxLv: 7, color: '#C9A55A',
+    desc: '布下御灵木傀，自行狙杀来敌。',
+    evoNotes: { 3: '连弩双发', 5: '神念弹追踪', 7: '双傀并立' },
+    base: { cd: 7, dmg: 10, duration: 6, fireRate: 0.5 },
+    perLv: { dmg: 3, duration: 0.5, cd: -0.3 },
+  },
+  xuanwo: {
+    name: '噬灵漩涡', maxLv: 7, color: C.jie,
+    desc: '张开噬灵漩涡，摄拉群妖，绞而灭之。',
+    evoNotes: { 3: '涡心邪光', 5: '涡口大张', 7: '终末坍缩爆裂' },
+    base: { cd: 6, dmg: 8, radius: 105, duration: 2.5, pull: 150 },
+    perLv: { dmg: 2.5, radius: 8, cd: -0.28 },
+  },
+  jinzhong: {
+    name: '梵音金钟', maxLv: 7, color: C.gold,
+    desc: '洪钟一响，震退荡尽周遭妖氛。',
+    evoNotes: { 3: '钟波双环', 5: '余韵迟滞', 7: '洪钟震慑定身' },
+    base: { cd: 3.2, dmg: 14, radius: 150, knock: 280 },
+    perLv: { dmg: 4.5, radius: 10, cd: -0.14 },
+  },
 };
 
 // ———— 心法（各5重）————
 export const PASSIVES = {
-  jinshen: { name: '不灭金身', maxLv: 5, desc: '每重生命上限 +25', per: { hp: 25 } },
-  tayun: { name: '踏云步', maxLv: 5, desc: '每重移速 +12%', per: { spd: 0.12 } },
-  guixi: { name: '龟息诀', maxLv: 5, desc: '每重每秒回复 +1.5', per: { regen: 1.5 } },
-  shenshi: { name: '神识扩展', maxLv: 5, desc: '每重灵气吸取范围 +40%', per: { magnet: 0.4 } },
-  wudao: { name: '悟道', maxLv: 5, desc: '每重伤害 +15%', per: { dmg: 0.15 } },
-  lingxi: { name: '灵犀诀', maxLv: 5, desc: '每重冷却 -10%', per: { cd: 0.10 } },
+  jinshen: { name: '不灭金身', maxLv: 5, desc: '每重生命上限 +25' },
+  tayun: { name: '踏云步', maxLv: 5, desc: '每重移速 +12%' },
+  guixi: { name: '龟息诀', maxLv: 5, desc: '每重每秒回复 +1.5' },
+  shenshi: { name: '神识扩展', maxLv: 5, desc: '每重灵气吸取范围 +40%' },
+  wudao: { name: '悟道', maxLv: 5, desc: '每重伤害 +15%' },
+  lingxi: { name: '灵犀诀', maxLv: 5, desc: '每重冷却 -10%' },
+  jingang: { name: '金刚不坏', maxLv: 5, desc: '每重受到伤害 -5%' },
+  huiyan: { name: '慧眼诀', maxLv: 5, desc: '每重暴击率 +4%' },
+  pojun: { name: '破军势', maxLv: 5, desc: '每重暴击伤害 +15%' },
+  guangyu: { name: '广域法相', maxLv: 5, desc: '每重术法范围 +6%' },
+  tiandao: { name: '天道酬勤', maxLv: 5, desc: '每重经验获取 +8%' },
+  jingji: { name: '荆棘罡体', maxLv: 5, desc: '每重接触反伤 6 点' },
+  hongyun: { name: '鸿运当头', maxLv: 5, desc: '每重回血丹掉率 +40%' },
+  yufeng: { name: '御风身法', maxLv: 5, desc: '每重 5% 概率闪避伤害' },
+  juling: { name: '聚灵吐纳', maxLv: 5, desc: '每重拾取灵气回复 0.5 生命' },
+  tongshen: { name: '通神明悟', maxLv: 5, desc: '每重神通触发间隔 -6%' },
 };
 
 // ———— 禁术（超武）————
@@ -193,9 +273,9 @@ export const DAOFRUITS = [
 // ———— 敌人 ————
 // 属性随分钟膨胀；spawnInterval 随时间收紧（下限 0.14s）。
 export const ENEMY_TYPES = {
-  swift: { hp: 6, spd: 118, dmg: 5, xp: 1, r: 10, color: '#7A8894', weight: 3 },
-  normal: { hp: 14, spd: 74, dmg: 9, xp: 2, r: 13, color: '#5E6E7A', weight: 4 },
-  elite: { hp: 85, spd: 52, dmg: 16, xp: 8, r: 20, color: '#8A6E9E', weight: 1 },
+  swift: { hp: 6, spd: 118, dmg: 5, xp: 2, r: 10, color: '#7A8894', weight: 3 },
+  normal: { hp: 14, spd: 74, dmg: 9, xp: 3, r: 13, color: '#5E6E7A', weight: 4 },
+  elite: { hp: 85, spd: 52, dmg: 16, xp: 10, r: 20, color: '#8A6E9E', weight: 1 },
 };
 export const ENEMY_SCALE_PER_MIN = { hp: 0.32, dmg: 0.11, spd: 0.012 }; // 每分钟乘性增幅
 export const SPAWN = {
@@ -223,7 +303,7 @@ export const TRIBULATION = {
 };
 
 // ———— 拾取物 ————
-export const PICKUP = { gemR: 6, magnetBase: 70, healAmount: 25, healChance: 0.025 };
+export const PICKUP = { gemR: 6, magnetBase: 95, healAmount: 25, healChance: 0.025 };
 
 // ———— 结算评级 ————
 // 依等级 / 击杀 / 是否一命通关：SS 需要通关 + 未用复活 + 等级≥55。

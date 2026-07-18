@@ -155,7 +155,7 @@ function togglePause() {
 // ============================================================
 G.gainXp = (n) => {
   const p = G.player;
-  p.xp += n;
+  p.xp += n * (p.stats.xpGain || 1); // 天道酬勤
   while (p.xp >= G.xpNeeded) {
     p.xp -= G.xpNeeded;
     p.level++;

@@ -43,6 +43,16 @@ export function recalcStats(p) {
     cd: (m.cd || 1),
     regen: (m.regen || 0),
     magnet: 1,
+    dmgTaken: 1,   // 受伤倍率（金刚不坏）
+    critCh: 0.12,  // 暴击率（慧眼诀）
+    critDmg: 1.75, // 暴击倍率（破军势）
+    area: 1,       // 术法范围（广域法相）
+    xpGain: 1,     // 经验获取（天道酬勤）
+    thorns: 0,     // 接触反伤（荆棘罡体）
+    healDrop: 1,   // 回血丹掉率（鸿运当头）
+    dodge: 0,      // 闪避率（御风身法）
+    gemHeal: 0,    // 拾取回血（聚灵吐纳）
+    powerCd: 1,    // 神通间隔（通神明悟）
   };
   const P = p.passives;
   if (P.jinshen) s.maxHp += 25 * P.jinshen;
@@ -51,6 +61,16 @@ export function recalcStats(p) {
   if (P.shenshi) s.magnet += 0.4 * P.shenshi;
   if (P.wudao) s.dmg *= 1 + 0.15 * P.wudao;
   if (P.lingxi) s.cd *= Math.pow(0.9, P.lingxi);
+  if (P.jingang) s.dmgTaken *= Math.pow(0.95, P.jingang);
+  if (P.huiyan) s.critCh += 0.04 * P.huiyan;
+  if (P.pojun) s.critDmg += 0.15 * P.pojun;
+  if (P.guangyu) s.area += 0.06 * P.guangyu;
+  if (P.tiandao) s.xpGain += 0.08 * P.tiandao;
+  if (P.jingji) s.thorns += 6 * P.jingji;
+  if (P.hongyun) s.healDrop += 0.4 * P.hongyun;
+  if (P.yufeng) s.dodge += 0.05 * P.yufeng;
+  if (P.juling) s.gemHeal += 0.5 * P.juling;
+  if (P.tongshen) s.powerCd *= Math.pow(0.94, P.tongshen);
   // 神通：天人合一 / 仙威盖世
   if (p.powers.unity) { s.dmg *= 1.3; s.cd *= 0.8; }
   if (p.powers.immortal) { s.dmg *= 1.5; s.spd *= 1.15; s.maxHp *= 1.5; }
@@ -80,9 +100,20 @@ export function recalcStats(p) {
   p.lightR = REALMS[p.realm].light;
 }
 
-export function hurtPlayer(G, dmg, fromX, fromY) {
+export function hurtPlayer(G, dmg, fromX, fromY, attacker) {
   const p = G.player;
   if (p.invuln > 0 || G.state !== 'playing') return;
+  // 御风身法：概率闪避
+  if (p.stats.dodge > 0 && Math.random() < p.stats.dodge) {
+    vfx.spawnText(p.x, p.y - 22, '闪', C.jian);
+    p.invuln = 0.25;
+    return;
+  }
+  // 荆棘罡体：接触反伤
+  if (attacker && p.stats.thorns > 0 && attacker.dying <= 0) {
+    damageEnemy(G, attacker, p.stats.thorns / Math.max(0.01, p.stats.dmg)); // 反伤不吃伤害加成
+  }
+  dmg *= p.stats.dmgTaken;
   if (p.shield > 0) {
     p.shield--;
     p.invuln = 0.6;
@@ -221,8 +252,9 @@ export function spawnTribulation(G) {
 // 通用伤害入口（武器/神通都走这里）
 export function damageEnemy(G, e, rawDmg, opts = {}) {
   if (e.dying > 0 || e.birth > 0.12) return false;
-  const crit = Math.random() < 0.12;
-  const dmg = rawDmg * G.player.stats.dmg * (crit ? 1.75 : 1);
+  const st = G.player.stats;
+  const crit = Math.random() < st.critCh;
+  const dmg = rawDmg * st.dmg * (crit ? st.critDmg : 1);
   e.hp -= dmg;
   e.flash = 0.08;
   if (opts.kx) { e.kbx += opts.kx; e.kby += opts.ky; }
@@ -270,7 +302,7 @@ export function killEnemy(G, e, opts = {}) {
   if (e.ai === 'trib') { G.onTribulationKilled(e); return; }
   // 掉灵气
   spawnGem(G, e.x, e.y, Math.max(1, Math.round(e.xp * xpMul)));
-  if (Math.random() < PICKUP.healChance) spawnHeal(G, e.x, e.y);
+  if (Math.random() < PICKUP.healChance * G.player.stats.healDrop) spawnHeal(G, e.x, e.y);
 }
 
 export function updateEnemies(G, dt) {
@@ -318,7 +350,7 @@ export function updateEnemies(G, dt) {
       // 接触伤害
       e.contactCd -= dt;
       if (e.contactCd <= 0 && l < e.r + p.r + 2) {
-        hurtPlayer(G, e.dmg, e.x, e.y);
+        hurtPlayer(G, e.dmg, e.x, e.y, e);
         e.contactCd = 0.7;
       }
     }
@@ -485,7 +517,10 @@ export function updateGems(G, dt) {
       g.y += (dy / l) * sp * dt;
       if (l < p.r + 8) {
         if (g.heal) { p.hp = Math.min(p.maxHp, p.hp + PICKUP.healAmount); vfx.spawnText(p.x, p.y - 18, '+' + PICKUP.healAmount, C.ghost); }
-        else G.gainXp(g.xp);
+        else {
+          G.gainXp(g.xp);
+          if (p.stats.gemHeal > 0) p.hp = Math.min(p.maxHp, p.hp + p.stats.gemHeal); // 聚灵吐纳
+        }
         sfx.pickup();
         gems.releaseAt(i);
       }

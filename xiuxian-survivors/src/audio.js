@@ -93,6 +93,19 @@ export const sfx = {
     osc('sawtooth', 71, 64, t, 0.9, 0.22, sfxGain);
   },
   nova() { if (!ac) return; const t = ac.currentTime; osc('sine', 300, 60, t, 0.5, 0.3, sfxGain); noise(t, 0.3, 0.25, 400, sfxGain); },
+  gong() { // 洪钟：低频泛音长衰减 + 槌击噪声
+    if (!ac) return;
+    const t = ac.currentTime;
+    [150, 226, 302, 449].forEach((f, i) =>
+      osc('sine', f, f * 0.985, t, 1.1 - i * 0.18, 0.22 / (i + 1), sfxGain));
+    noise(t, 0.06, 0.2, 800, sfxGain);
+  },
+  qin() { // 琴音：两声快拨
+    if (!ac) return;
+    const t = ac.currentTime;
+    osc('triangle', 660, 654, t, 0.4, 0.12, sfxGain);
+    osc('triangle', 990, 981, t + 0.07, 0.35, 0.09, sfxGain);
+  },
   freeze() { if (!ac) return; const t = ac.currentTime; noise(t, 0.5, 0.3, 6000, sfxGain, 'highpass'); osc('sine', 2800, 900, t, 0.5, 0.1, sfxGain); },
   ascend() {
     if (!ac) return;
