@@ -205,6 +205,9 @@ function resize() {
   W = innerWidth; H = innerHeight;
   cv.width = Math.ceil(W * DPR);
   cv.height = Math.ceil(H * DPR);
+  // 关键：显示尺寸必须锁定为 CSS 像素，否则高分屏上画布被放大、主角偏离屏幕中心
+  cv.style.width = W + 'px';
+  cv.style.height = H + 'px';
 }
 addEventListener('resize', resize);
 resize();
@@ -812,6 +815,338 @@ function dUniverse(e, t) {
   C(0, 0, 1); ST('rgba(230,210,255,0.9)', 0.04);
   C(-0.35, -0.35, 0.5); F('rgba(255,255,255,0.1)');
 }
+// —— 生活杂物（还原原作的"什么都能吃"）——
+function dBreadcrumb(e, t) {
+  C(0, 0, 0.8); F('#C8A060');
+  C(-0.3, -0.2, 0.4); F('#D8B478');
+  for (let i = 0; i < 4; i++) { const a = e.ph + i * 1.7; C(Math.cos(a) * 0.4, Math.sin(a) * 0.4, 0.08); F('#8A6840'); }
+}
+function dRice(e, t) { EL(0, 0, 0.95, 0.42, e.ph); F('#F0EBE0'); EL(-0.2, -0.1, 0.4, 0.15, e.ph); F('#FFFFFF'); }
+function dPushpin(e, t) {
+  ctx.save(); ctx.rotate(e.ph);
+  ctx.beginPath(); ctx.moveTo(0, 0.1); ctx.lineTo(0, 0.9); ST('#9AA4AC', 0.09);
+  C(0, -0.3, 0.55); F('#C75450');
+  C(-0.18, -0.45, 0.16); F('rgba(255,255,255,0.4)');
+  ctx.restore();
+}
+function dButton(e, t) {
+  C(0, 0, 0.9); F('#7A9CB8'); C(0, 0, 0.9); ST('#5A7C98', 0.08);
+  for (const [x, y] of [[-0.25, -0.25], [0.25, -0.25], [-0.25, 0.25], [0.25, 0.25]]) { C(x, y, 0.11); F('#3A5468'); }
+}
+function dMarble(e, t) {
+  C(0, 0, 0.9); F('rgba(200,220,230,0.55)');
+  ctx.beginPath(); ctx.arc(0, 0, 0.5, e.ph, e.ph + 2.2); ST('#58C0A8', 0.2);
+  C(-0.3, -0.3, 0.2); F('rgba(255,255,255,0.75)');
+}
+function dCoin(e, t) { // 方孔铜钱
+  C(0, 0, 0.92); F('#C9A55A'); C(0, 0, 0.92); ST('#A8843C', 0.07);
+  ctx.fillStyle = '#8A6E30'; ctx.fillRect(-0.24, -0.24, 0.48, 0.48);
+  ctx.strokeStyle = '#A8843C'; ctx.lineWidth = 0.06; ctx.strokeRect(-0.3, -0.3, 0.6, 0.6);
+}
+function dDuck(e, t) { // 橡皮鸭：原作精神图腾
+  const fl = e.vx < 0 ? -1 : 1;
+  ctx.save(); ctx.scale(fl, 1);
+  EL(0, 0.25, 0.8, 0.55); F('#F0C838');
+  C(0.45, -0.35, 0.42); F('#F0C838');
+  ctx.beginPath(); ctx.moveTo(0.8, -0.4); ctx.quadraticCurveTo(1.15, -0.32, 0.82, -0.18); ctx.closePath(); F('#E08830');
+  C(0.55, -0.45, 0.07); F('#2A2420');
+  EL(-0.45, 0.05, 0.3, 0.2, -0.5); F('#E0B028');
+  ctx.restore();
+}
+function dSoap(e, t) {
+  ctx.save(); ctx.rotate(e.ph * 0.4);
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(-0.85, -0.5, 1.7, 1, 0.3) : ctx.rect(-0.85, -0.5, 1.7, 1);
+  F('#E8A0B0');
+  EL(-0.25, -0.15, 0.4, 0.2, 0.2); F('rgba(255,255,255,0.35)');
+  C(0.7, -0.7, 0.16); ST('rgba(255,255,255,0.7)', 0.05);
+  C(0.95, -0.4, 0.1); ST('rgba(255,255,255,0.6)', 0.04);
+  ctx.restore();
+}
+function dMug(e, t) {
+  ctx.fillStyle = '#B85450'; ctx.fillRect(-0.55, -0.45, 1.1, 1.05);
+  EL(0, -0.45, 0.55, 0.16); F('#8A3C38');
+  ctx.beginPath(); ctx.arc(0.72, 0.1, 0.3, -Math.PI / 2, Math.PI / 2); ST('#B85450', 0.14);
+  ctx.globalAlpha = 0.4;
+  ctx.beginPath(); ctx.moveTo(-0.15, -0.6); ctx.quadraticCurveTo(-0.3, -0.9, -0.1, -1.1); ST('#E8E2D0', 0.07);
+  ctx.beginPath(); ctx.moveTo(0.15, -0.6); ctx.quadraticCurveTo(0.3, -0.95, 0.12, -1.15); ST('#E8E2D0', 0.07);
+  ctx.globalAlpha = 1;
+}
+function dBook(e, t) {
+  ctx.save(); ctx.rotate(e.ph * 0.3);
+  ctx.beginPath(); ctx.moveTo(0, -0.55); ctx.lineTo(-0.95, -0.4); ctx.lineTo(-0.95, 0.5); ctx.lineTo(0, 0.62); ctx.closePath(); F('#F0EBE0');
+  ctx.beginPath(); ctx.moveTo(0, -0.55); ctx.lineTo(0.95, -0.4); ctx.lineTo(0.95, 0.5); ctx.lineTo(0, 0.62); ctx.closePath(); F('#E4DCC8');
+  ctx.strokeStyle = 'rgba(120,110,90,0.5)'; ctx.lineWidth = 0.035;
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath(); ctx.moveTo(-0.8, -0.2 + i * 0.22); ctx.lineTo(-0.15, -0.12 + i * 0.22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0.15, -0.12 + i * 0.22); ctx.lineTo(0.8, -0.2 + i * 0.22); ctx.stroke();
+  }
+  ctx.restore();
+}
+// —— 动物扩充 ——
+function dChicken(e, t) {
+  const fl = e.vx < 0 ? -1 : 1;
+  ctx.save(); ctx.scale(fl, 1);
+  EL(0, 0.1, 0.7, 0.55); F('#F0EBE0');
+  C(0.5, -0.4, 0.3); F('#F0EBE0');
+  ctx.beginPath(); ctx.moveTo(0.42, -0.72); ctx.quadraticCurveTo(0.5, -0.95, 0.6, -0.7); ctx.quadraticCurveTo(0.68, -0.9, 0.72, -0.66); ctx.closePath(); F('#C75450');
+  ctx.beginPath(); ctx.moveTo(0.78, -0.42); ctx.lineTo(0.98, -0.34); ctx.lineTo(0.78, -0.26); ctx.closePath(); F('#E08830');
+  C(0.58, -0.46, 0.05); F('#2A2420');
+  ctx.beginPath(); ctx.moveTo(-0.6, 0); ctx.lineTo(-0.95, -0.35); ctx.lineTo(-0.8, 0.15); ctx.closePath(); F('#D8CBB0');
+  ctx.restore();
+}
+function dSnake(e, t) {
+  const a = Math.atan2(e.vy, e.vx);
+  ctx.save(); ctx.rotate(a);
+  ctx.beginPath();
+  for (let i = 0; i <= 12; i++) {
+    const x = 0.9 - i * 0.16;
+    const y = Math.sin(i * 0.9 + t * 8) * 0.28 * (i / 12);
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ST('#5C8C50', 0.3);
+  C(0.95, 0, 0.24); F('#5C8C50');
+  C(1.02, -0.08, 0.05); F('#F0C838');
+  ctx.beginPath(); ctx.moveTo(1.18, 0); ctx.lineTo(1.38, -0.06); ctx.moveTo(1.32, 0); ctx.lineTo(1.38, 0.06); ST('#C75450', 0.04);
+  ctx.restore();
+}
+function dPig(e, t) {
+  const fl = e.vx < 0 ? -1 : 1;
+  ctx.save(); ctx.scale(fl, 1);
+  EL(0, 0, 0.9, 0.62); F('#E8A0A8');
+  C(0.62, -0.15, 0.4); F('#E8A0A8');
+  EL(0.95, -0.1, 0.18, 0.14); F('#D8808C');
+  C(0.9, -0.14, 0.045); F('#8A4C54'); C(0.99, -0.14, 0.045); F('#8A4C54');
+  ctx.beginPath(); ctx.moveTo(0.45, -0.5); ctx.lineTo(0.6, -0.75); ctx.lineTo(0.72, -0.48); ctx.closePath(); F('#D8808C');
+  C(0.68, -0.25, 0.05); F('#4A2C30');
+  ctx.beginPath(); ctx.arc(-0.92, -0.15, 0.12, 0, TAU * 0.75); ST('#D8808C', 0.07);
+  ctx.restore();
+}
+function dCow(e, t) {
+  const fl = e.vx < 0 ? -1 : 1;
+  ctx.save(); ctx.scale(fl, 1);
+  EL(0, 0, 0.95, 0.58); F('#F0EBE0');
+  C(-0.2, -0.1, 0.3); F('#3A3230'); C(0.35, 0.2, 0.24); F('#3A3230');
+  C(0.78, -0.25, 0.34); F('#F0EBE0');
+  EL(1, -0.12, 0.2, 0.15); F('#E8B4C0');
+  C(0.82, -0.38, 0.05); F('#2A2420');
+  ctx.beginPath(); ctx.moveTo(0.6, -0.52); ctx.quadraticCurveTo(0.5, -0.8, 0.68, -0.72); ST('#D8CBB0', 0.08);
+  ctx.restore();
+}
+function dHorse(e, t) {
+  const fl = e.vx < 0 ? -1 : 1;
+  const run = Math.min(1, Math.hypot(e.vx, e.vy) / (e.r * 1.4));
+  ctx.save(); ctx.scale(fl, 1);
+  for (let i = 0; i < 4; i++) {
+    const sw = Math.sin(t * 12 + i * 1.6) * 0.3 * run;
+    ctx.beginPath(); ctx.moveTo(-0.6 + i * 0.4, 0.3); ctx.lineTo(-0.6 + i * 0.4 + sw, 0.85); ST('#6E4A2E', 0.11);
+  }
+  EL(0, 0, 0.9, 0.48); F('#8A6240');
+  ctx.beginPath(); ctx.moveTo(0.7, -0.2); ctx.lineTo(1.05, -0.75); ST('#8A6240', 0.3);
+  EL(1.1, -0.85, 0.26, 0.16, 0.5); F('#8A6240');
+  C(1.06, -0.94, 0.045); F('#2A2420');
+  ctx.beginPath(); ctx.moveTo(0.72, -0.55); ctx.quadraticCurveTo(0.55, -0.35, 0.62, -0.05); ST('#4A3020', 0.09);
+  ctx.beginPath(); ctx.moveTo(-0.88, -0.1); ctx.quadraticCurveTo(-1.2, 0.1, -1.15, 0.45 + Math.sin(t * 5) * 0.08); ST('#4A3020', 0.09);
+  ctx.restore();
+}
+function dElephant(e, t) {
+  const fl = e.vx < 0 ? -1 : 1;
+  ctx.save(); ctx.scale(fl, 1);
+  for (let i = 0; i < 4; i++) { ctx.fillStyle = '#8A8A96'; ctx.fillRect(-0.62 + i * 0.38, 0.25, 0.22, 0.6); }
+  EL(0, 0, 0.95, 0.6); F('#9A9AA6');
+  C(0.72, -0.3, 0.42); F('#9A9AA6');
+  EL(0.45, -0.35, 0.3, 0.38); F('#8A8A96');
+  ctx.beginPath(); ctx.moveTo(1.05, -0.2); ctx.quadraticCurveTo(1.35, 0.25, 1.1, 0.68); ST('#8A8A96', 0.22);
+  C(0.82, -0.42, 0.05); F('#2A2420');
+  ctx.beginPath(); ctx.moveTo(0.95, -0.02); ctx.quadraticCurveTo(1.12, 0.1, 1.05, 0.22); ST('#E8E2D0', 0.09);
+  ctx.restore();
+}
+function dWhale(e, t) {
+  const fl = e.vx < 0 ? -1 : 1;
+  ctx.save(); ctx.scale(fl, 1);
+  ctx.beginPath();
+  ctx.moveTo(1, 0);
+  ctx.quadraticCurveTo(0.6, -0.62, -0.3, -0.5);
+  ctx.quadraticCurveTo(-0.85, -0.4, -1, -0.05);
+  ctx.quadraticCurveTo(-0.8, 0.15, -0.55, 0.18);
+  ctx.quadraticCurveTo(0.4, 0.5, 1, 0);
+  F('#5878A0');
+  ctx.beginPath(); ctx.moveTo(-0.85, -0.15); ctx.lineTo(-1.25, -0.45); ctx.lineTo(-1.1, 0); ctx.lineTo(-1.3, 0.28); ctx.closePath(); F('#48688E');
+  EL(0.3, 0.22, 0.55, 0.16, -0.15); F('#C8D8E4');
+  C(0.66, -0.18, 0.05); F('#182430');
+  ctx.globalAlpha = 0.6;
+  ctx.beginPath(); ctx.moveTo(0.35, -0.55); ctx.quadraticCurveTo(0.25, -0.95, 0.1, -1.05); ST('#C8E4F0', 0.06);
+  ctx.beginPath(); ctx.moveTo(0.4, -0.55); ctx.quadraticCurveTo(0.5, -0.95, 0.62, -1.02); ST('#C8E4F0', 0.06);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+// —— 载具与地标 ——
+function dLamp(e, t) {
+  ctx.beginPath(); ctx.moveTo(0, 0.95); ctx.lineTo(0, -0.7); ctx.quadraticCurveTo(0, -0.95, 0.35, -0.92); ST('#4A5058', 0.1);
+  C(0.42, -0.9, 0.14); F('#FFE9A0');
+  ctx.globalAlpha = 0.25; C(0.42, -0.9, 0.32); F('#FFE9A0'); ctx.globalAlpha = 1;
+}
+function dBus(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  ctx.fillStyle = '#5A9C58'; ctx.fillRect(-1, -0.42, 2, 0.8);
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 0.04; ctx.strokeRect(-1, -0.42, 2, 0.8);
+  ctx.fillStyle = '#C8E4E8';
+  for (let i = 0; i < 5; i++) ctx.fillRect(-0.88 + i * 0.4, -0.3, 0.28, 0.26);
+  for (const x of [-0.6, 0.6]) { C(x, 0.42, 0.17); F('#22262A'); }
+  ctx.restore();
+}
+function dSailboat(e, t) {
+  ctx.beginPath(); ctx.moveTo(-0.8, 0.4); ctx.lineTo(0.8, 0.4); ctx.lineTo(0.55, 0.75); ctx.lineTo(-0.55, 0.75); ctx.closePath(); F('#8A5844');
+  ctx.beginPath(); ctx.moveTo(0, 0.35); ctx.lineTo(0, -0.9); ST('#4A3626', 0.06);
+  ctx.beginPath(); ctx.moveTo(0.02, -0.85); ctx.lineTo(0.6, 0.28); ctx.lineTo(0.02, 0.28); ctx.closePath(); F('#F0EBE0');
+  ctx.beginPath(); ctx.moveTo(-0.02, -0.7); ctx.lineTo(-0.5, 0.28); ctx.lineTo(-0.02, 0.28); ctx.closePath(); F('#E4DCC8');
+}
+function dHeli(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  EL(0.1, 0.1, 0.55, 0.32); F('#C87840');
+  ctx.beginPath(); ctx.moveTo(-0.35, 0.05); ctx.lineTo(-1, 0); ST('#C87840', 0.12);
+  ctx.beginPath(); ctx.moveTo(-1, -0.2); ctx.lineTo(-1, 0.2); ST('#A85C30', 0.08);
+  C(0.28, 0.02, 0.16); F('#C8E4E8');
+  ctx.beginPath(); ctx.moveTo(0.1, -0.22); ctx.lineTo(0.1, -0.34); ST('#4A3626', 0.06);
+  ctx.save(); ctx.translate(0.1, -0.36); ctx.rotate(t * 30);
+  ctx.beginPath(); ctx.moveTo(-0.85, 0); ctx.lineTo(0.85, 0); ST('rgba(60,50,40,0.75)', 0.06);
+  ctx.restore();
+  ctx.restore();
+}
+function dPlane(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  EL(0, 0, 1, 0.18); F('#E8ECF0');
+  ctx.beginPath(); ctx.moveTo(0.15, 0); ctx.lineTo(-0.45, -0.75); ctx.lineTo(-0.62, -0.72); ctx.lineTo(-0.15, 0); ctx.closePath(); F('#C8D4DC');
+  ctx.beginPath(); ctx.moveTo(0.15, 0); ctx.lineTo(-0.45, 0.75); ctx.lineTo(-0.62, 0.72); ctx.lineTo(-0.15, 0); ctx.closePath(); F('#C8D4DC');
+  ctx.beginPath(); ctx.moveTo(-0.85, 0); ctx.lineTo(-1.1, -0.32); ctx.lineTo(-1.02, 0); ctx.closePath(); F('#B85450');
+  ctx.fillStyle = '#68A0B8';
+  for (let i = 0; i < 6; i++) ctx.fillRect(-0.5 + i * 0.2, -0.07, 0.09, 0.07);
+  ctx.restore();
+}
+function dBalloon(e, t) {
+  C(0, -0.35, 0.62); F('#C75450');
+  ctx.save(); ctx.beginPath(); ctx.arc(0, -0.35, 0.62, 0, TAU); ctx.clip();
+  for (let i = -2; i <= 2; i++) { ctx.fillStyle = i % 2 ? '#E8B850' : '#C75450'; ctx.fillRect(i * 0.25 - 0.1, -1, 0.22, 1.4); }
+  ctx.restore();
+  ctx.beginPath(); ctx.moveTo(-0.3, 0.15); ctx.lineTo(-0.14, 0.62); ctx.moveTo(0.3, 0.15); ctx.lineTo(0.14, 0.62); ST('#8A6E50', 0.04);
+  ctx.fillStyle = '#8A5844'; ctx.fillRect(-0.2, 0.6, 0.4, 0.28);
+}
+function dFerris(e, t) {
+  ctx.beginPath(); ctx.moveTo(-0.5, 0.95); ctx.lineTo(0, 0.1); ctx.lineTo(0.5, 0.95); ST('#6E7C88', 0.08);
+  C(0, -0.05, 0.85); ST('#8A98A4', 0.07);
+  ctx.save(); ctx.translate(0, -0.05); ctx.rotate(t * 0.4 + e.ph);
+  for (let i = 0; i < 8; i++) {
+    const a = i / 8 * TAU;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * 0.85, Math.sin(a) * 0.85); ST('rgba(138,152,164,0.7)', 0.04);
+    C(Math.cos(a) * 0.85, Math.sin(a) * 0.85, 0.1);
+    F(['#C75450', '#E8B850', '#5A9C58', '#68A0B8'][i % 4]);
+  }
+  ctx.restore();
+}
+function dTower(e, t) {
+  ctx.beginPath(); ctx.moveTo(-0.5, 1); ctx.lineTo(-0.08, -0.55); ctx.lineTo(0.08, -0.55); ctx.lineTo(0.5, 1); ST('#A05848', 0.08);
+  for (let i = 0; i < 4; i++) {
+    const yy = 0.85 - i * 0.35, hw = 0.42 - i * 0.09;
+    ctx.beginPath(); ctx.moveTo(-hw, yy); ctx.lineTo(hw, yy); ST('#A05848', 0.05);
+  }
+  C(0, -0.62, 0.12); F('#C8D4DC');
+  ctx.beginPath(); ctx.moveTo(0, -0.72); ctx.lineTo(0, -1); ST('#A05848', 0.05);
+  C(0, -1, 0.05); F('#FF6A5E');
+}
+function dShip(e, t) {
+  ctx.save(); ctx.rotate(Math.atan2(e.vy, e.vx));
+  ctx.beginPath(); ctx.moveTo(-1, -0.25); ctx.lineTo(1, -0.25); ctx.lineTo(0.8, 0.3); ctx.lineTo(-0.85, 0.3); ctx.closePath(); F('#4A5058');
+  for (let i = 0; i < 6; i++) {
+    ctx.fillStyle = ['#C75450', '#E8B850', '#5A9C58', '#68A0B8', '#C87840', '#8A6E9E'][i];
+    ctx.fillRect(-0.8 + i * 0.24, -0.45, 0.2, 0.2);
+  }
+  ctx.fillStyle = '#E8ECF0'; ctx.fillRect(0.62, -0.62, 0.25, 0.37);
+  ctx.restore();
+}
+function dBridge(e, t) {
+  ctx.beginPath(); ctx.moveTo(-1, 0.15); ctx.lineTo(1, 0.15); ST('#8A5844', 0.1);
+  for (const x of [-0.5, 0.5]) {
+    ctx.beginPath(); ctx.moveTo(x, 0.4); ctx.lineTo(x, -0.6); ST('#A05848', 0.09);
+  }
+  ctx.beginPath(); ctx.moveTo(-1, -0.1); ctx.quadraticCurveTo(-0.5, -0.62, 0, -0.15); ctx.quadraticCurveTo(0.5, -0.62, 1, -0.1); ST('#C8A05A', 0.05);
+  for (let i = 0; i < 9; i++) {
+    const x = -0.9 + i * 0.225;
+    const y = -0.1 - Math.abs(Math.sin((i / 8) * Math.PI * 2)) * 0.28;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, 0.15); ST('rgba(200,160,90,0.6)', 0.025);
+  }
+}
+function dIceberg(e, t) {
+  ctx.beginPath(); ctx.moveTo(-0.9, 0.2); ctx.lineTo(-0.5, -0.7); ctx.lineTo(-0.05, -0.25); ctx.lineTo(0.3, -0.9); ctx.lineTo(0.85, 0.2); ctx.closePath();
+  F('#E8F2F6'); ST('#B8D8E4', 0.05);
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath(); ctx.moveTo(-0.85, 0.22); ctx.lineTo(0.8, 0.22); ctx.lineTo(0.55, 0.7); ctx.lineTo(-0.5, 0.7); ctx.closePath(); F('#88B8D0');
+  ctx.globalAlpha = 1;
+}
+function dFarmland(e, t) {
+  ctx.save(); ctx.rotate(e.ph * 0.5);
+  for (let i = 0; i < 4; i++) {
+    ctx.fillStyle = ['#A8B860', '#7A9458', '#C8B060', '#8AA850'][i];
+    ctx.fillRect(-0.9, -0.9 + i * 0.46, 1.8, 0.42);
+  }
+  ctx.strokeStyle = 'rgba(90,72,50,0.6)'; ctx.lineWidth = 0.04;
+  ctx.strokeRect(-0.9, -0.9, 1.8, 1.84);
+  ctx.restore();
+}
+function dForest(e, t) {
+  for (let i = 0; i < 12; i++) {
+    const a = e.ph + i * 2.4, r = ((i * 7) % 10) / 11;
+    C(Math.cos(a) * r, Math.sin(a) * r * 0.9, 0.22 + (i % 3) * 0.05);
+    F(i % 2 ? '#4A7440' : '#55854A');
+  }
+}
+function dVolcano(e, t) {
+  ctx.beginPath(); ctx.moveTo(-1, 0.75); ctx.lineTo(-0.3, -0.6); ctx.lineTo(0.3, -0.6); ctx.lineTo(1, 0.75); ctx.closePath(); F('#5E4A44');
+  ctx.beginPath(); ctx.moveTo(-0.3, -0.6); ctx.lineTo(0.3, -0.6); ctx.lineTo(0.18, -0.45); ctx.lineTo(-0.18, -0.45); ctx.closePath(); F('#E06840');
+  ctx.beginPath(); ctx.moveTo(-0.1, -0.55); ctx.quadraticCurveTo(0.05, -0.2, -0.12, 0.2); ST('#E06840', 0.09);
+  ctx.globalAlpha = 0.45;
+  C(0.1, -0.85 + Math.sin(t * 2 + e.ph) * 0.05, 0.22); F('#8A8A88');
+  C(-0.12, -1 + Math.sin(t * 1.6 + e.ph) * 0.06, 0.16); F('#9A9A98');
+  ctx.globalAlpha = 1;
+}
+function dTyphoon(e, t) {
+  ctx.save(); ctx.rotate(-t * 0.8 + e.ph);
+  ctx.globalAlpha = 0.85;
+  for (let arm = 0; arm < 3; arm++) {
+    ctx.beginPath();
+    for (let i = 0; i <= 12; i++) {
+      const tt = i / 12;
+      const a = arm * (TAU / 3) + tt * 3.4;
+      const r = 0.12 + tt * 0.85;
+      const x = Math.cos(a) * r, y = Math.sin(a) * r;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ST('rgba(240,246,250,0.8)', 0.2);
+  }
+  ctx.globalAlpha = 1;
+  C(0, 0, 0.14); F('rgba(40,60,80,0.9)');
+  ctx.restore();
+}
+function dAsteroid(e, t) {
+  ctx.save(); ctx.rotate(e.ph + t * 0.2);
+  ctx.beginPath();
+  for (let i = 0; i <= 9; i++) {
+    const a = i / 9 * TAU;
+    const r = 0.75 + Math.sin(a * 3 + e.ph * 5) * 0.2;
+    i ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  ctx.closePath(); F('#8A8278'); ST('#6E6860', 0.05);
+  C(-0.2, -0.15, 0.18); F('#6E6860'); C(0.3, 0.25, 0.12); F('#6E6860');
+  ctx.restore();
+}
+function dBlackhole(e, t) {
+  ctx.save(); ctx.rotate(e.ph);
+  EL(0, 0, 1.5, 0.42); ST('rgba(255,180,100,0.75)', 0.14);
+  EL(0, 0, 1.15, 0.3); ST('rgba(255,220,160,0.9)', 0.1);
+  ctx.beginPath(); ctx.arc(0, -0.35, 0.72, Math.PI * 1.05, Math.PI * 1.95); ST('rgba(255,200,130,0.8)', 0.1);
+  C(0, 0, 0.62); F('#050508');
+  C(0, 0, 0.62); ST('rgba(255,230,180,0.9)', 0.05);
+  ctx.restore();
+}
 function dCrumb(e, t) {
   const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
   g.addColorStop(0, '#FFF2CE'); g.addColorStop(0.5, 'rgba(255,216,144,0.6)'); g.addColorStop(1, 'rgba(0,0,0,0)');
@@ -878,21 +1213,52 @@ const TYPES = [
   { n: '甲虫', rm: 7e-3, g: [-3, -1.2], w: 2.2, mv: 'walk', flee: 1, d: dBeetle },
   { n: '蜘蛛', rm: 1e-2, g: [-3, -1], w: 1.6, mv: 'walk', chase: 1, d: dSpider },
   { n: '蟑螂', rm: 1.7e-2, g: [-2.6, -0.8], w: 2, mv: 'walk', flee: 1, d: dRoach },
+  { n: '面包屑', rm: 2.5e-3, g: [-3.4, -1.6], w: 2, mv: 'static', d: dBreadcrumb },
+  { n: '米粒', rm: 3.5e-3, g: [-3.2, -1.4], w: 1.8, mv: 'static', d: dRice },
+  { n: '图钉', rm: 5e-3, g: [-3, -1.2], w: 1.2, mv: 'static', d: dPushpin },
+  { n: '纽扣', rm: 7e-3, g: [-2.8, -1], w: 1.4, mv: 'static', d: dButton },
+  { n: '玻璃弹珠', rm: 8e-3, g: [-2.8, -0.9], w: 1.4, mv: 'static', d: dMarble },
+  { n: '铜钱', rm: 1.2e-2, g: [-2.6, -0.8], w: 1.4, mv: 'static', d: dCoin },
+  { n: '橡皮鸭', rm: 4e-2, g: [-2, -0.2], w: 1.6, mv: 'walk', flee: 1, d: dDuck },
+  { n: '肥皂', rm: 4.5e-2, g: [-2, -0.2], w: 1.2, mv: 'static', d: dSoap },
+  { n: '马克杯', rm: 5e-2, g: [-1.9, -0.1], w: 1.2, mv: 'static', d: dMug },
+  { n: '书本', rm: 0.16, g: [-1.4, 0.5], w: 1.4, mv: 'static', d: dBook },
   { n: '青蛙', rm: 4.5e-2, g: [-2.2, -0.4], w: 1.8, mv: 'walk', flee: 1, chase: 1, d: dFrog },
   { n: '老鼠', rm: 5.5e-2, g: [-2, -0.3], w: 2.2, mv: 'walk', flee: 1, chase: 1, d: dMouse },
   { n: '麻雀', rm: 9e-2, g: [-1.8, -0.1], w: 1.8, mv: 'walk', flee: 1, d: dSparrow },
   { n: '猫', rm: 0.26, g: [-1.2, 0.7], w: 1.8, mv: 'walk', flee: 1, chase: 1, d: dCat },
   { n: '狗', rm: 0.42, g: [-1, 0.9], w: 1.8, mv: 'walk', flee: 1, chase: 1, d: dDog },
+  { n: '母鸡', rm: 0.22, g: [-1.2, 0.6], w: 1.6, mv: 'walk', flee: 1, d: dChicken },
+  { n: '蛇', rm: 0.5, g: [-1.1, 0.8], w: 1.2, mv: 'walk', chase: 1, d: dSnake },
+  { n: '猪', rm: 0.55, g: [-0.9, 0.9], w: 1.4, mv: 'walk', flee: 1, d: dPig },
+  { n: '奶牛', rm: 0.95, g: [-0.6, 1.2], w: 1.4, mv: 'walk', flee: 1, d: dCow },
+  { n: '马', rm: 1.05, g: [-0.5, 1.3], w: 1.4, mv: 'walk', flee: 1, d: dHorse },
+  { n: '大象', rm: 2.6, g: [-0.1, 1.8], w: 1.2, mv: 'walk', flee: 1, d: dElephant },
+  { n: '鲸鱼', rm: 13, g: [0.7, 2.7], w: 1.4, mv: 'walk', flee: 1, d: dWhale },
   { n: '人', rm: 0.9, g: [-0.6, 1.7], w: 3, mv: 'walk', flee: 1, d: dHuman, vary: 1 },
   { n: '自行车骑手', rm: 1.1, g: [-0.3, 1.7], w: 1.4, mv: 'walk', flee: 1, d: dBike },
   { n: '汽车', rm: 2.4, g: [0, 2.1], w: 2.6, mv: 'walk', flee: 1, d: dCar, vary: 1 },
   { n: '卡车', rm: 4.6, g: [0.3, 2.4], w: 1.6, mv: 'walk', flee: 1, d: dTruck },
+  { n: '路灯', rm: 4.2, g: [0, 2.4], w: 1.4, mv: 'static', d: dLamp },
+  { n: '公交车', rm: 6.5, g: [0.3, 2.4], w: 1.4, mv: 'walk', flee: 1, d: dBus },
+  { n: '帆船', rm: 8, g: [0.4, 2.5], w: 1.2, mv: 'float', d: dSailboat },
+  { n: '直升机', rm: 7, g: [0.4, 2.5], w: 1.2, mv: 'drift', fast: 1, d: dHeli },
+  { n: '热气球', rm: 11, g: [0.6, 2.7], w: 1.2, mv: 'float', d: dBalloon },
+  { n: '客机', rm: 32, g: [1.2, 3.4], w: 1.4, mv: 'drift', fast: 1, d: dPlane },
   { n: '树', rm: 4, g: [0, 2.7], w: 2.4, mv: 'static', d: dTree },
   { n: '民房', rm: 7, g: [0.5, 2.8], w: 2.2, mv: 'static', d: dHouse },
   { n: '大楼', rm: 32, g: [1.2, 3.4], w: 2.4, mv: 'static', d: dBuilding, vary: 1 },
   { n: '摩天大楼', rm: 130, g: [1.8, 4], w: 2, mv: 'static', d: dSkyscraper },
   { n: '体育场', rm: 260, g: [2.2, 4.2], w: 1.4, mv: 'static', d: dStadium },
   { n: '街区', rm: 520, g: [2.5, 4.6], w: 2.2, mv: 'static', d: dBlock },
+  { n: '摩天轮', rm: 85, g: [1.6, 3.8], w: 1.2, mv: 'static', d: dFerris },
+  { n: '电视塔', rm: 190, g: [2, 4.1], w: 1.2, mv: 'static', d: dTower },
+  { n: '集装箱货轮', rm: 160, g: [1.8, 4], w: 1.4, mv: 'float', d: dShip },
+  { n: '跨海大桥', rm: 350, g: [2.3, 4.5], w: 1.2, mv: 'static', d: dBridge },
+  { n: '冰山', rm: 400, g: [2.4, 4.6], w: 1.2, mv: 'float', d: dIceberg },
+  { n: '农田', rm: 350, g: [2.4, 4.7], w: 1.8, mv: 'static', d: dFarmland },
+  { n: '森林', rm: 1800, g: [2.9, 5.3], w: 1.8, mv: 'static', d: dForest },
+  { n: '火山', rm: 2800, g: [3, 5.6], w: 1.4, mv: 'static', d: dVolcano },
   { n: '山峰', rm: 2600, g: [3, 5.6], w: 2.2, mv: 'static', d: dMountain },
   { n: '湖泊', rm: 4600, g: [3.2, 5.6], w: 1.8, mv: 'static', d: dLake },
   { n: '城市', rm: 9500, g: [3.6, 6], w: 2, mv: 'static', d: dCity },
@@ -900,6 +1266,8 @@ const TYPES = [
   { n: '岛屿', rm: 5.2e4, g: [4.4, 6.5], w: 2, mv: 'static', d: dIsland },
   { n: '山脉', rm: 3.2e5, g: [5, 6.8], w: 1.8, mv: 'static', d: dRange },
   { n: '大陆', rm: 2.6e6, g: [5.8, 7.4], w: 1.8, mv: 'static', d: dContinent },
+  { n: '台风', rm: 2.5e5, g: [4.8, 6.7], w: 1.4, mv: 'float', d: dTyphoon },
+  { n: '小行星', rm: 5e4, g: [5.6, 7.6], w: 1.8, mv: 'drift', d: dAsteroid },
   { n: '月球', rm: 1.7e6, g: [6, 8.1], w: 2, mv: 'drift', d: dMoon },
   { n: '彗星', rm: 5e5, g: [6.2, 8.6], w: 1.4, mv: 'drift', fast: 1, d: dComet },
   { n: '火星', rm: 3.4e6, g: [6.3, 8.3], w: 1.6, mv: 'drift', d: dMars },
@@ -908,6 +1276,7 @@ const TYPES = [
   { n: '恒星', rm: 7e8, g: [7.6, 10.2], w: 2.6, mv: 'drift', d: (e, t) => dStar(e, t, '#FFF6DC', '#FFD890') },
   { n: '蓝巨星', rm: 7e9, g: [8.3, 11], w: 1.8, mv: 'drift', d: (e, t) => dStar(e, t, '#E8F4FF', '#9CC8F0') },
   { n: '红巨星', rm: 2e11, g: [9.2, 12.4], w: 1.8, mv: 'drift', d: (e, t) => dStar(e, t, '#FFE0C8', '#E07850') },
+  { n: '黑洞', rm: 1e10, g: [8.6, 11.8], w: 1.2, mv: 'drift', d: dBlackhole },
   { n: '恒星系', rm: 4.5e12, g: [10.5, 14], w: 2.4, mv: 'drift', d: dSolarSystem },
   { n: '星云', rm: 5e15, g: [12.8, 17.4], w: 2.4, mv: 'float', d: dNebula },
   { n: '球状星团', rm: 2e17, g: [14.4, 19], w: 2, mv: 'drift', d: dCluster },
